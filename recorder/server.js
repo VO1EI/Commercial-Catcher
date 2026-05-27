@@ -17,18 +17,39 @@ function ts() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 }
 
-// ── Fetch Icecast/Shoutcast metadata ─────────────────────────────────────────
-// Shoutcast/Icecast streams expose current track in the ICY metadata protocol.
-// We request the stream with Icy-MetaData: 1 header and parse the response.
+// ── JSON now-playing API fetch ────────────────────────────────────────────────
+// Handles endpoints like https://player.avrnetwork.com/CKENFM/nowplaying
+// which return { artist, title, albumart }
 
-function fetchMetadata(url) {
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https') ? https : http;
+    const bust = `${url.includes('?') ? '&' : '?'}_=${Date.now()}`;
+    const req = lib.get(url + bust, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      timeout: 6000,
+    }, (res) => {
+      let body = '';
+      res.on('data', d => body += d.toString());
+      res.on('end', () => {
+        try { resolve(JSON.parse(body)); }
+        catch (_) { reject(new Error('not json')); }
+      });
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+  });
+}
+
+// ── ICY stream metadata fetch ─────────────────────────────────────────────────
+// Reads inline ICY metadata from a Shoutcast/Icecast stream
+
+function fetchIcyMetadata(url) {
   return new Promise((resolve) => {
     const lib = url.startsWith('https') ? https : http;
     const req = lib.get(url, {
-      headers: {
-        'Icy-MetaData': '1',
-        'User-Agent': 'Mozilla/5.0',
-      },
+      headers: { 'Icy-MetaData': '1', 'User-Agent': 'Mozilla/5.0' },
       timeout: 8000,
     }, (res) => {
       const metaInt = parseInt(res.headers['icy-metaint'] || '0');
@@ -36,7 +57,6 @@ function fetchMetadata(url) {
       const streamTitle = res.headers['icy-description'] || '';
 
       if (!metaInt) {
-        // No inline metadata — try icy headers only
         req.destroy();
         return resolve({ title: streamTitle || null, station: stationName, raw: '' });
       }
@@ -55,7 +75,6 @@ function fetchMetadata(url) {
             const audioBytes = Math.min(remaining, chunk.length - offset);
             bytesRead += audioBytes;
             offset += audioBytes;
-
             if (bytesRead >= metaInt) {
               bytesRead = 0;
               inMeta = true;
@@ -67,26 +86,18 @@ function fetchMetadata(url) {
               }
             }
           } else {
-            if (metaLen === 0) {
-              inMeta = false;
-              continue;
-            }
+            if (metaLen === 0) { inMeta = false; continue; }
             const needed = metaLen - metaBytesRead;
             const available = chunk.length - offset;
             const take = Math.min(needed, available);
             metaBuffer = Buffer.concat([metaBuffer, chunk.slice(offset, offset + take)]);
             metaBytesRead += take;
             offset += take;
-
             if (metaBytesRead >= metaLen) {
               const metaStr = metaBuffer.toString('utf8').replace(/\0/g, '');
               const match = metaStr.match(/StreamTitle='([^']*)'/);
               req.destroy();
-              return resolve({
-                title: match ? match[1].trim() : null,
-                station: stationName,
-                raw: metaStr,
-              });
+              return resolve({ title: match ? match[1].trim() : null, station: stationName, raw: metaStr });
             }
           }
         }
@@ -101,9 +112,34 @@ function fetchMetadata(url) {
   });
 }
 
-// ── Ad detection from title ───────────────────────────────────────────────────
-// A title is "music" if it looks like "Artist - Song"
-// A title is "ad/unknown" if it's blank, hasn't changed for too long, or matches ad keywords
+// ── Unified metadata fetch ────────────────────────────────────────────────────
+// Auto-detects JSON API vs ICY stream
+
+async function fetchMetadata(url) {
+  // Try JSON first
+  try {
+    const data = await fetchJson(url);
+    if (data && (data.title || data.artist || data.song || data.track)) {
+      const artist = data.artist || data.artistName || '';
+      const title  = data.title  || data.song || data.track || data.songTitle || '';
+      const combined = artist && title ? `${artist} - ${title}` : (title || artist || null);
+      return {
+        title: combined,
+        artist,
+        songTitle: title,
+        station: data.station || data.name || null,
+        albumart: data.albumart || data.artwork || null,
+        raw: JSON.stringify(data),
+        isJson: true,
+      };
+    }
+  } catch (_) {}
+
+  // Fall back to ICY
+  return fetchIcyMetadata(url);
+}
+
+// ── Ad detection ──────────────────────────────────────────────────────────────
 
 const AD_KEYWORDS = [
   'advertisement', 'advert', 'commercial', 'sponsor', 'promo',
@@ -116,8 +152,6 @@ function titleIsMusic(title) {
   for (const kw of AD_KEYWORDS) {
     if (lower.includes(kw)) return false;
   }
-  // Looks like a song if it has " - " separator (Artist - Title)
-  // or is reasonably long
   return title.includes(' - ') || title.length > 5;
 }
 
@@ -125,14 +159,18 @@ function titleIsMusic(title) {
 
 function startMonitor(id, url, options = {}) {
   const {
-    pollInterval = 10,     // seconds between metadata checks
-    stallThreshold = 60,   // seconds with no title change = likely ad
+    pollInterval = 10,
+    stallThreshold = 60,
+    metadataUrl = null,
   } = options;
 
   const state = {
     id, url,
     status: 'listening',
     currentTitle: null,
+    currentArtist: null,
+    currentSongTitle: null,
+    currentAlbumart: null,
     lastTitle: null,
     lastTitleChange: Date.now(),
     station: null,
@@ -141,7 +179,7 @@ function startMonitor(id, url, options = {}) {
     ffmpegRec: null,
     startTime: new Date(),
     interval: null,
-    options: { pollInterval, stallThreshold },
+    options: { pollInterval, stallThreshold, metadataUrl },
     titleHistory: [],
   };
 
@@ -150,27 +188,35 @@ function startMonitor(id, url, options = {}) {
   async function poll() {
     if (!monitors[id]) return;
     try {
-      const meta = await fetchMetadata(url);
+      const pollUrl = state.options.metadataUrl || url;
+      const meta = await fetchMetadata(pollUrl);
       if (!monitors[id]) return;
 
       state.station = meta.station || state.station;
+      state.currentAlbumart = meta.albumart || state.currentAlbumart;
+      state.currentArtist = meta.artist || null;
+      state.currentSongTitle = meta.songTitle || null;
+
       const title = meta.title;
       state.currentTitle = title;
 
       const isMusic = titleIsMusic(title);
       const now = Date.now();
 
-      // Track title changes
       if (title !== state.lastTitle) {
         state.lastTitle = title;
         state.lastTitleChange = now;
-        state.titleHistory.unshift({ title, time: new Date() });
+        state.titleHistory.unshift({
+          title,
+          artist: meta.artist || null,
+          songTitle: meta.songTitle || null,
+          albumart: meta.albumart || null,
+          time: new Date(),
+        });
         if (state.titleHistory.length > 20) state.titleHistory.pop();
       }
 
-      // Stall detection: title hasn't changed in stallThreshold seconds
       const stalled = (now - state.lastTitleChange) > (stallThreshold * 1000);
-
       const isAd = !isMusic || stalled;
 
       if (isAd && state.status === 'listening') {
@@ -181,7 +227,6 @@ function startMonitor(id, url, options = {}) {
     } catch (e) {}
   }
 
-  // Poll immediately then on interval
   poll();
   state.interval = setInterval(poll, pollInterval * 1000);
 }
@@ -195,9 +240,7 @@ function beginRecording(state) {
 
   const rec = spawn('ffmpeg', [
     '-i', state.url,
-    '-vn',
-    '-acodec', 'libmp3lame',
-    '-q:a', '2',
+    '-vn', '-acodec', 'libmp3lame', '-q:a', '2',
     outPath
   ]);
   state.ffmpegRec = rec;
@@ -229,6 +272,9 @@ app.get('/api/status', (req, res) => {
     url: m.url,
     status: m.status,
     currentTitle: m.currentTitle,
+    currentArtist: m.currentArtist,
+    currentSongTitle: m.currentSongTitle,
+    currentAlbumart: m.currentAlbumart,
     station: m.station,
     recordingFile: m.recordingFile,
     recordingStart: m.recordingStart,
@@ -236,15 +282,16 @@ app.get('/api/status', (req, res) => {
     lastTitleChange: m.lastTitleChange,
     titleHistory: m.titleHistory.slice(0, 5),
     options: m.options,
+    metadataSource: m.options.metadataUrl ? 'json' : 'stream',
   }));
   res.json({ active });
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, pollInterval, stallThreshold } = req.body;
+  const { url, pollInterval, stallThreshold, metadataUrl } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { pollInterval, stallThreshold });
+  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null });
   res.json({ id, message: 'Monitoring started' });
 });
 

@@ -195,10 +195,19 @@
     <div class="card-label">Monitor a Stream</div>
     <div class="input-row">
       <div class="input-wrap">
-        <label>Stream URL</label>
-        <input type="text" id="streamUrl" placeholder="http://stream.example.com:8000/radio" />
+        <label>Stream URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(audio)</span></label>
+        <input type="text" id="streamUrl" placeholder="https://mbsradio.leanstream.co/CKENFM-MP3?args=web_02" />
       </div>
       <button class="btn btn-start" onclick="startMonitor()">▶ &nbsp;START</button>
+    </div>
+    <div style="margin-bottom:16px">
+      <label>
+        Metadata URL
+        <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">
+          — optional, if song titles come from a different URL than the audio stream
+        </span>
+      </label>
+      <input type="text" id="metadataUrl" placeholder="e.g. https://mbsradio.leanstream.co/CKENFM-NP3?args=web_02  (leave blank to read from stream)" />
     </div>
     <details>
       <summary>⚙ Tuning (optional)</summary>
@@ -297,18 +306,20 @@
   async function startMonitor() {
     const url = document.getElementById('streamUrl').value.trim();
     if (!url) return toast('Stream URL is required', 'error');
+    const metadataUrl = document.getElementById('metadataUrl').value.trim() || null;
     const pollInterval = parseInt(document.getElementById('pollInterval').value) || 10;
     const stallThreshold = parseInt(document.getElementById('stallThreshold').value) || 60;
     try {
       const res = await fetch(`${API}/api/monitor/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, pollInterval, stallThreshold })
+        body: JSON.stringify({ url, metadataUrl, pollInterval, stallThreshold })
       });
       const data = await res.json();
       if (data.error) return toast(data.error, 'error');
       toast('Monitoring started', 'success');
       document.getElementById('streamUrl').value = '';
+      document.getElementById('metadataUrl').value = '';
       refreshStatus();
     } catch(e) {
       toast('Could not connect to recorder service', 'error');
@@ -396,6 +407,16 @@
         const stallPct = Math.min(100, (staleSeconds / m.options.stallThreshold) * 100);
         const stallColor = stallPct > 80 ? 'var(--red)' : stallPct > 50 ? 'var(--amber)' : 'var(--green)';
 
+        const albumArtHtml = m.currentAlbumart
+          ? `<img src="${m.currentAlbumart.startsWith('//') ? 'https:' + m.currentAlbumart : m.currentAlbumart}"
+               style="width:52px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)"
+               onerror="this.style.display='none'">`
+          : '';
+
+        const sourceLabel = m.metadataSource === 'json'
+          ? '🔗 JSON API — ' + m.options.metadataUrl
+          : '📡 ICY stream metadata';
+
         const historyHtml = m.titleHistory.length ? `
           <div class="title-history">
             <div class="history-label">Recent titles</div>
@@ -403,11 +424,15 @@
               ${m.titleHistory.map(h => `
                 <div class="history-item">
                   <span class="history-time">${fmtTime(h.time)}</span>
-                  <span class="history-title">${h.title || '<em>no title</em>'}</span>
+                  <span class="history-title">${h.artist && h.songTitle
+                    ? '<strong>' + h.artist + '</strong> — ' + h.songTitle
+                    : (h.title || '<em>no title</em>')}</span>
                 </div>
               `).join('')}
             </div>
           </div>` : '';
+
+        const artCol = albumArtHtml ? 'auto 1fr 1fr' : '1fr 1fr';
 
         return `
           <div class="monitor-card ${stateClass(m)}">
@@ -420,14 +445,20 @@
               <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
               <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
             </div>
-            <div class="meta-panel">
+            <div class="meta-panel" style="grid-template-columns:${artCol}">
+              ${albumArtHtml ? '<div>' + albumArtHtml + '</div>' : ''}
               <div class="meta-item">
-                <div class="meta-key">Current title</div>
-                <div class="meta-val">${m.currentTitle || '—'}</div>
+                <div class="meta-key">Now playing</div>
+                <div class="meta-val">${m.currentSongTitle || m.currentTitle || '—'}</div>
+                ${m.currentArtist ? '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + m.currentArtist + '</div>' : ''}
               </div>
               <div class="meta-item">
                 <div class="meta-key">Title unchanged for</div>
                 <div class="meta-val" style="color:${stallColor}">${staleFor(m.lastTitleChange)} ${m.status === 'recording' ? '— recording' : ''}</div>
+              </div>
+              <div class="meta-item" style="grid-column:1/-1">
+                <div class="meta-key">Metadata source</div>
+                <div class="meta-val" style="font-size:11px;white-space:normal">${sourceLabel}</div>
               </div>
             </div>
             ${historyHtml}
