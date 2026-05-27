@@ -76,6 +76,10 @@
   .btn-sm{background:var(--surface2);color:var(--muted);border:1px solid var(--border);padding:5px 12px;font-size:10px}
   .btn-sm:hover{border-color:var(--green);color:var(--green)}
   .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:10px 18px}
+  .btn-rec-on{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);padding:5px 11px;font-size:10px}
+  .btn-rec-on:hover{background:var(--red);color:#fff}
+  .btn-rec-off{background:var(--surface2);color:var(--muted);border:1px solid var(--border);padding:5px 11px;font-size:10px}
+  .btn-rec-off:hover{border-color:var(--green);color:var(--green)}
   .btn-secondary:hover{border-color:var(--green);color:var(--green)}
 
   /* Quick launch */
@@ -414,12 +418,14 @@ function staleFor(ts) {
 
 function stateLabel(m) {
   if (m.status === 'recording') return '⏺ RECORDING AD — ' + elapsed(m.recordingStart);
+  if (m.status === 'monitoring-ad') return '👁 AD DETECTED — not recording';
   if (m.status === 'listening') return m.currentTitle ? '🎵 ' + m.currentTitle : '🎵 LISTENING';
   return 'STARTING...';
 }
 
 function stateClass(m) {
   if (m.status === 'recording') return 'state-recording';
+  if (m.status === 'monitoring-ad') return 'state-starting';
   if (m.status === 'listening') return 'state-listening';
   return 'state-starting';
 }
@@ -605,6 +611,16 @@ async function loadRecordings() {
 
 // ── Status polling ────────────────────────────────────────────────────────────
 
+async function toggleRecording(id, currentlyEnabled) {
+  const enable = !currentlyEnabled;
+  await fetch(`${API}/api/monitor/${id}/recording`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ enabled: enable })
+  });
+  toast(enable ? 'Recording enabled' : 'Recording paused — metadata only', enable ? 'success' : '');
+  refreshStatus();
+}
+
 let prevStates = {};
 
 async function refreshStatus() {
@@ -652,6 +668,11 @@ async function refreshStatus() {
               <div class="monitor-status-line">${stateLabel(m)}</div>
             </div>
             <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
+            <button class="btn ${m.recordingEnabled ? 'btn-rec-on' : 'btn-rec-off'}"
+              onclick="toggleRecording('${m.id}', ${m.recordingEnabled})"
+              title="${m.recordingEnabled ? 'Click to pause recording (metadata only)' : 'Click to enable recording'}">
+              ${m.recordingEnabled ? '⏺ REC ON' : '○ REC OFF'}
+            </button>
             <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
           </div>
           <div class="meta-panel" style="grid-template-columns:${artCols}">

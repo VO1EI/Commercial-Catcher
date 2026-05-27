@@ -189,6 +189,7 @@ function startMonitor(id, url, options = {}) {
     stationName = '',
     triggerMode = 'stall',       // 'stall' or 'keyword'
     triggerKeywords = '',        // comma-separated keywords; blank = trigger on empty title
+    recordingEnabled = true,     // when false, monitor metadata but don't record
   } = options;
 
   const state = {
@@ -206,7 +207,7 @@ function startMonitor(id, url, options = {}) {
     ffmpegRec: null,
     startTime: new Date(),
     interval: null,
-    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords },
+    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled },
     titleHistory: [],
   };
 
@@ -265,9 +266,11 @@ function startMonitor(id, url, options = {}) {
       }
 
       if (isAd && state.status === 'listening') {
-        beginRecording(state);
-      } else if (!isAd && state.status === 'recording') {
-        endRecording(state);
+        if (state.options.recordingEnabled) beginRecording(state);
+        else state.status = 'monitoring-ad';
+      } else if (!isAd && (state.status === 'recording' || state.status === 'monitoring-ad')) {
+        if (state.status === 'recording') endRecording(state);
+        else state.status = 'listening';
       }
     } catch (e) {}
   }
@@ -331,15 +334,16 @@ app.get('/api/status', (req, res) => {
     titleHistory: m.titleHistory.slice(0, 5),
     options: m.options,
     metadataSource: m.options.metadataUrl ? 'json' : 'stream',
+    recordingEnabled: m.options.recordingEnabled,
   }));
   res.json({ active });
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords } = req.body;
+  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '' });
+  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '', recordingEnabled: recordingEnabled !== false });
   res.json({ id, message: 'Monitoring started' });
 });
 
@@ -441,6 +445,20 @@ app.delete('/api/stations/:name', (req, res) => {
   const stations = loadStationsData().filter(s => s.name !== req.params.name);
   saveStationsData(stations);
   res.json({ message: 'Deleted' });
+});
+
+// Toggle recording on/off for a monitor
+app.post('/api/monitor/:id/recording', (req, res) => {
+  const m = monitors[req.params.id];
+  if (!m) return res.status(404).json({ error: 'Not found' });
+  const enable = req.body.enabled !== false;
+  m.options.recordingEnabled = enable;
+  // If disabling while recording, stop the current recording
+  if (!enable && m.status === 'recording') {
+    endRecording(m);
+    m.status = 'listening';
+  }
+  res.json({ recordingEnabled: m.options.recordingEnabled });
 });
 
 app.listen(3000, () => console.log('Ad Recorder API on :3000'));
