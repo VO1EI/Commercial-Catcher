@@ -461,4 +461,59 @@ app.post('/api/monitor/:id/recording', (req, res) => {
   res.json({ recordingEnabled: m.options.recordingEnabled });
 });
 
+// ── Purge recordings ──────────────────────────────────────────────────────────
+
+function purgeOlderThan(hours) {
+  const cutoff = Date.now() - (hours * 60 * 60 * 1000);
+  let deleted = 0;
+  try {
+    fs.readdirSync(RECORDINGS_DIR)
+      .filter(f => /\.(mp3|aac|ogg)$/i.test(f))
+      .forEach(f => {
+        const fp = path.join(RECORDINGS_DIR, f);
+        const stat = fs.statSync(fp);
+        if (stat.mtimeMs < cutoff) { fs.unlinkSync(fp); deleted++; }
+      });
+  } catch(e) {}
+  return deleted;
+}
+
+// Manual purge endpoint
+app.post('/api/recordings/purge', (req, res) => {
+  const hours = parseFloat(req.body.hours) || 24;
+  const deleted = purgeOlderThan(hours);
+  res.json({ deleted, hours });
+});
+
+// Get purge settings
+app.get('/api/settings/purge', (req, res) => {
+  const settingsFile = '/recordings/settings.json';
+  try { res.json(JSON.parse(fs.readFileSync(settingsFile, 'utf8'))); }
+  catch(_) { res.json({ autoPurgeEnabled: false, autoPurgeHours: 24 }); }
+});
+
+// Save purge settings
+app.post('/api/settings/purge', (req, res) => {
+  const { autoPurgeEnabled, autoPurgeHours } = req.body;
+  const settings = { autoPurgeEnabled: !!autoPurgeEnabled, autoPurgeHours: parseFloat(autoPurgeHours) || 24 };
+  fs.writeFileSync('/recordings/settings.json', JSON.stringify(settings, null, 2));
+  scheduleAutoPurge(settings);
+  res.json(settings);
+});
+
+let autoPurgeTimer = null;
+
+function scheduleAutoPurge(settings) {
+  if (autoPurgeTimer) clearInterval(autoPurgeTimer);
+  if (!settings.autoPurgeEnabled) return;
+  const intervalMs = settings.autoPurgeHours * 60 * 60 * 1000;
+  autoPurgeTimer = setInterval(() => purgeOlderThan(settings.autoPurgeHours), intervalMs);
+}
+
+// Load saved purge settings on startup
+try {
+  const s = JSON.parse(fs.readFileSync('/recordings/settings.json', 'utf8'));
+  scheduleAutoPurge(s);
+} catch(_) {}
+
 app.listen(3000, () => console.log('Ad Recorder API on :3000'));
