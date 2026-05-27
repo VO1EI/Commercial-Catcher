@@ -163,6 +163,8 @@ function startMonitor(id, url, options = {}) {
     stallThreshold = 60,
     metadataUrl = null,
     stationName = '',
+    triggerMode = 'stall',       // 'stall' or 'keyword'
+    triggerKeywords = '',        // comma-separated keywords; blank = trigger on empty title
   } = options;
 
   const state = {
@@ -180,7 +182,7 @@ function startMonitor(id, url, options = {}) {
     ffmpegRec: null,
     startTime: new Date(),
     interval: null,
-    options: { pollInterval, stallThreshold, metadataUrl, stationName },
+    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords },
     titleHistory: [],
   };
 
@@ -292,10 +294,10 @@ app.get('/api/status', (req, res) => {
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, pollInterval, stallThreshold, metadataUrl, stationName } = req.body;
+  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '' });
+  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '' });
   res.json({ id, message: 'Monitoring started' });
 });
 
