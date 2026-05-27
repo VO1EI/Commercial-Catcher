@@ -3,6 +3,8 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const http = require('http');
+const https = require('https');
 
 const app = express();
 app.use(cors());
@@ -15,128 +17,176 @@ function ts() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 }
 
-// ── Volume monitor ────────────────────────────────────────────────────────────
-// Uses ffmpeg astats filter to read mean volume every second.
-// Commercials are louder than music on most broadcast streams.
-// We track a rolling average and flag when current volume is significantly
-// above baseline (ad) or a silence gap occurs (transition).
+// ── Fetch Icecast/Shoutcast metadata ─────────────────────────────────────────
+// Shoutcast/Icecast streams expose current track in the ICY metadata protocol.
+// We request the stream with Icy-MetaData: 1 header and parse the response.
+
+function fetchMetadata(url) {
+  return new Promise((resolve) => {
+    const lib = url.startsWith('https') ? https : http;
+    const req = lib.get(url, {
+      headers: {
+        'Icy-MetaData': '1',
+        'User-Agent': 'Mozilla/5.0',
+      },
+      timeout: 8000,
+    }, (res) => {
+      const metaInt = parseInt(res.headers['icy-metaint'] || '0');
+      const stationName = res.headers['icy-name'] || '';
+      const streamTitle = res.headers['icy-description'] || '';
+
+      if (!metaInt) {
+        // No inline metadata — try icy headers only
+        req.destroy();
+        return resolve({ title: streamTitle || null, station: stationName, raw: '' });
+      }
+
+      let bytesRead = 0;
+      let metaBuffer = Buffer.alloc(0);
+      let inMeta = false;
+      let metaLen = 0;
+      let metaBytesRead = 0;
+
+      res.on('data', (chunk) => {
+        let offset = 0;
+        while (offset < chunk.length) {
+          if (!inMeta) {
+            const remaining = metaInt - bytesRead;
+            const audioBytes = Math.min(remaining, chunk.length - offset);
+            bytesRead += audioBytes;
+            offset += audioBytes;
+
+            if (bytesRead >= metaInt) {
+              bytesRead = 0;
+              inMeta = true;
+              if (offset < chunk.length) {
+                metaLen = chunk[offset] * 16;
+                offset++;
+                metaBytesRead = 0;
+                metaBuffer = Buffer.alloc(0);
+              }
+            }
+          } else {
+            if (metaLen === 0) {
+              inMeta = false;
+              continue;
+            }
+            const needed = metaLen - metaBytesRead;
+            const available = chunk.length - offset;
+            const take = Math.min(needed, available);
+            metaBuffer = Buffer.concat([metaBuffer, chunk.slice(offset, offset + take)]);
+            metaBytesRead += take;
+            offset += take;
+
+            if (metaBytesRead >= metaLen) {
+              const metaStr = metaBuffer.toString('utf8').replace(/\0/g, '');
+              const match = metaStr.match(/StreamTitle='([^']*)'/);
+              req.destroy();
+              return resolve({
+                title: match ? match[1].trim() : null,
+                station: stationName,
+                raw: metaStr,
+              });
+            }
+          }
+        }
+      });
+
+      res.on('error', () => resolve({ title: null, station: stationName, raw: '' }));
+      setTimeout(() => { req.destroy(); resolve({ title: null, station: stationName, raw: '' }); }, 6000);
+    });
+
+    req.on('error', () => resolve({ title: null, station: null, raw: '' }));
+    req.on('timeout', () => { req.destroy(); resolve({ title: null, station: null, raw: '' }); });
+  });
+}
+
+// ── Ad detection from title ───────────────────────────────────────────────────
+// A title is "music" if it looks like "Artist - Song"
+// A title is "ad/unknown" if it's blank, hasn't changed for too long, or matches ad keywords
+
+const AD_KEYWORDS = [
+  'advertisement', 'advert', 'commercial', 'sponsor', 'promo',
+  'break', 'ad:', 'spot:', 'paid', 'presented by',
+];
+
+function titleIsMusic(title) {
+  if (!title || title.trim() === '') return false;
+  const lower = title.toLowerCase();
+  for (const kw of AD_KEYWORDS) {
+    if (lower.includes(kw)) return false;
+  }
+  // Looks like a song if it has " - " separator (Artist - Title)
+  // or is reasonably long
+  return title.includes(' - ') || title.length > 5;
+}
+
+// ── Monitor ───────────────────────────────────────────────────────────────────
 
 function startMonitor(id, url, options = {}) {
   const {
-    silenceThreshold = -40,   // dB — below this = silence (transition gap)
-    adBoostDb = 3,            // dB above rolling avg = likely ad
-    silenceDuration = 0.5,    // seconds of silence to trigger transition
+    pollInterval = 10,     // seconds between metadata checks
+    stallThreshold = 60,   // seconds with no title change = likely ad
   } = options;
 
   const state = {
     id, url,
     status: 'listening',
-    currentDb: null,
-    baselineDb: null,
-    dbHistory: [],
+    currentTitle: null,
+    lastTitle: null,
+    lastTitleChange: Date.now(),
+    station: null,
     recordingFile: null,
     recordingStart: null,
-    ffmpegMonitor: null,
     ffmpegRec: null,
     startTime: new Date(),
-    silenceStart: null,
-    lastTransition: 0,
-    options: { silenceThreshold, adBoostDb, silenceDuration },
+    interval: null,
+    options: { pollInterval, stallThreshold },
+    titleHistory: [],
   };
 
   monitors[id] = state;
 
-  // ffmpeg reads stream, outputs volume stats to stderr every 0.5s
-  const monitor = spawn('ffmpeg', [
-    '-i', url,
-    '-vn',
-    '-af', `astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-`,
-    '-f', 'null',
-    '-'
-  ]);
+  async function poll() {
+    if (!monitors[id]) return;
+    try {
+      const meta = await fetchMetadata(url);
+      if (!monitors[id]) return;
 
-  state.ffmpegMonitor = monitor;
+      state.station = meta.station || state.station;
+      const title = meta.title;
+      state.currentTitle = title;
 
-  let buf = '';
-  monitor.stderr.on('data', d => { buf += d.toString(); });
+      const isMusic = titleIsMusic(title);
+      const now = Date.now();
 
-  // Parse volume from stdout metadata output
-  monitor.stdout.on('data', d => {
-    const lines = (buf + d.toString()).split('\n');
-    buf = '';
-    for (const line of lines) {
-      const m = line.match(/lavfi\.astats\.Overall\.RMS_level=(.+)/);
-      if (m) {
-        const db = parseFloat(m[1]);
-        if (!isNaN(db) && isFinite(db)) {
-          processVolume(state, db);
-        }
+      // Track title changes
+      if (title !== state.lastTitle) {
+        state.lastTitle = title;
+        state.lastTitleChange = now;
+        state.titleHistory.unshift({ title, time: new Date() });
+        if (state.titleHistory.length > 20) state.titleHistory.pop();
       }
-    }
-  });
 
-  monitor.on('close', () => {
-    if (monitors[id]) {
-      monitors[id].status = 'stopped';
-    }
-  });
-}
+      // Stall detection: title hasn't changed in stallThreshold seconds
+      const stalled = (now - state.lastTitleChange) > (stallThreshold * 1000);
 
-function processVolume(state, db) {
-  const now = Date.now();
-  state.currentDb = db;
+      const isAd = !isMusic || stalled;
 
-  // Build rolling baseline (median of last 30 readings ≈ 15 seconds)
-  state.dbHistory.push(db);
-  if (state.dbHistory.length > 30) state.dbHistory.shift();
-
-  // Baseline = median of history (robust to outliers)
-  const sorted = [...state.dbHistory].filter(v => v > -80).sort((a,b) => a-b);
-  if (sorted.length > 5) {
-    state.baselineDb = sorted[Math.floor(sorted.length / 2)];
+      if (isAd && state.status === 'listening') {
+        beginRecording(state);
+      } else if (!isAd && state.status === 'recording') {
+        endRecording(state);
+      }
+    } catch (e) {}
   }
 
-  const { silenceThreshold, adBoostDb, silenceDuration } = state.options;
-  const COOLDOWN_MS = 8000; // min 8s between transitions
-
-  const isSilence = db < silenceThreshold;
-  const isLoud = state.baselineDb !== null && db > state.baselineDb + adBoostDb;
-
-  // Silence gap detection (transition marker)
-  if (isSilence) {
-    if (!state.silenceStart) state.silenceStart = now;
-    const silenceMs = now - state.silenceStart;
-
-    if (silenceMs >= silenceDuration * 1000 && now - state.lastTransition > COOLDOWN_MS) {
-      // Silence gap = transition between music and ad (or vice versa)
-      state.lastTransition = now;
-      if (state.status === 'listening') {
-        startRecording(state);
-      } else if (state.status === 'recording') {
-        stopRecording(state);
-      }
-    }
-  } else {
-    state.silenceStart = null;
-
-    // Volume spike = likely ad started (no silence gap on this stream)
-    if (isLoud && state.status === 'listening' && now - state.lastTransition > COOLDOWN_MS) {
-      state.lastTransition = now;
-      startRecording(state);
-    }
-
-    // Volume back to normal = music resumed
-    if (!isLoud && state.status === 'recording' &&
-        state.baselineDb !== null &&
-        db < state.baselineDb + (adBoostDb / 2) &&
-        now - state.lastTransition > COOLDOWN_MS) {
-      state.lastTransition = now;
-      stopRecording(state);
-    }
-  }
+  // Poll immediately then on interval
+  poll();
+  state.interval = setInterval(poll, pollInterval * 1000);
 }
 
-function startRecording(state) {
+function beginRecording(state) {
   const filename = `commercial-${ts()}.mp3`;
   const outPath = path.join(RECORDINGS_DIR, filename);
   state.recordingFile = filename;
@@ -152,9 +202,16 @@ function startRecording(state) {
   ]);
   state.ffmpegRec = rec;
   rec.stderr.on('data', () => {});
+  rec.on('close', () => {
+    if (state.status === 'recording') {
+      state.status = 'listening';
+      state.recordingFile = null;
+      state.recordingStart = null;
+    }
+  });
 }
 
-function stopRecording(state) {
+function endRecording(state) {
   if (state.ffmpegRec) {
     state.ffmpegRec.kill('SIGTERM');
     state.ffmpegRec = null;
@@ -171,28 +228,30 @@ app.get('/api/status', (req, res) => {
     id: m.id,
     url: m.url,
     status: m.status,
-    currentDb: m.currentDb ? m.currentDb.toFixed(1) : null,
-    baselineDb: m.baselineDb ? m.baselineDb.toFixed(1) : null,
+    currentTitle: m.currentTitle,
+    station: m.station,
     recordingFile: m.recordingFile,
     recordingStart: m.recordingStart,
     startTime: m.startTime,
+    lastTitleChange: m.lastTitleChange,
+    titleHistory: m.titleHistory.slice(0, 5),
     options: m.options,
   }));
   res.json({ active });
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, silenceThreshold, adBoostDb, silenceDuration } = req.body;
+  const { url, pollInterval, stallThreshold } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { silenceThreshold, adBoostDb, silenceDuration });
+  startMonitor(id, url, { pollInterval, stallThreshold });
   res.json({ id, message: 'Monitoring started' });
 });
 
 app.post('/api/monitor/stop/:id', (req, res) => {
   const m = monitors[req.params.id];
   if (!m) return res.status(404).json({ error: 'Not found' });
-  if (m.ffmpegMonitor) m.ffmpegMonitor.kill('SIGTERM');
+  clearInterval(m.interval);
   if (m.ffmpegRec) m.ffmpegRec.kill('SIGTERM');
   delete monitors[req.params.id];
   res.json({ message: 'Stopped' });
@@ -200,7 +259,7 @@ app.post('/api/monitor/stop/:id', (req, res) => {
 
 app.post('/api/monitor/stopall', (req, res) => {
   Object.values(monitors).forEach(m => {
-    if (m.ffmpegMonitor) m.ffmpegMonitor.kill('SIGTERM');
+    clearInterval(m.interval);
     if (m.ffmpegRec) m.ffmpegRec.kill('SIGTERM');
   });
   monitors = {};
