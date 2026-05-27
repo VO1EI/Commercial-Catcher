@@ -1,0 +1,28 @@
+services:
+
+  recorder:
+    build: ./recorder
+    restart: unless-stopped
+    volumes:
+      - recordings:/recordings
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      dockerfile: web.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    depends_on:
+      - recorder
+    networks:
+      - internal
+
+volumes:
+  recordings:
+
+networks:
+  internal:
+    driver: bridge
