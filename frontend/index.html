@@ -29,14 +29,8 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
 
-  /* ── Header ── */
   .header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -44,34 +38,11 @@
     display: flex; align-items: center; gap: 14px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
+  .logo { width: 32px; height: 32px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  h1 { font-family: 'Space Mono', monospace; font-size: 15px; letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--muted); margin-left: 2px; }
 
-  .logo {
-    width: 32px; height: 32px;
-    background: var(--red);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    font-size: 15px;
-  }
-
-  h1 {
-    font-family: 'Space Mono', monospace;
-    font-size: 15px;
-    letter-spacing: -0.3px;
-  }
-
-  .header-sub {
-    font-size: 12px;
-    color: var(--muted);
-    margin-left: 2px;
-  }
-
-  /* ── Layout ── */
-  .main {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 32px 40px;
-  }
+  .main { max-width: 860px; margin: 0 auto; padding: 32px 40px; }
 
   .card {
     background: var(--surface);
@@ -84,242 +55,128 @@
 
   .card-label {
     font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--muted);
-    margin-bottom: 18px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--muted); margin-bottom: 18px;
   }
 
-  /* ── Form ── */
-  .input-row {
-    display: flex; gap: 10px; align-items: flex-end;
-  }
-
+  .input-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
   .input-wrap { flex: 1; }
 
-  label {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 6px;
-    font-family: 'Space Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
 
-  input {
+  input[type=text], input[type=number] {
     width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    padding: 10px 14px;
-    outline: none;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    padding: 10px 14px; outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-
-  input:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 0 3px rgba(26,107,60,0.1);
-  }
-
+  input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,107,60,0.1); }
   input::placeholder { color: #ccc; }
 
-  /* ── Buttons ── */
+  .tuning-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .tuning-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 18px;
-    border-radius: 8px; border: none; cursor: pointer;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
-    transition: all 0.15s; white-space: nowrap;
+    padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer;
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px; transition: all 0.15s; white-space: nowrap;
   }
-
-  .btn-start {
-    background: var(--green); color: #fff;
-    padding: 10px 22px;
-  }
+  .btn-start { background: var(--green); color: #fff; padding: 10px 22px; }
   .btn-start:hover { background: #155c33; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,107,60,0.25); }
-
-  .btn-stop {
-    background: var(--red-bg); color: var(--red);
-    border: 1px solid var(--red-border);
-    padding: 7px 14px; font-size: 10px;
-  }
+  .btn-stop { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); padding: 7px 14px; font-size: 10px; }
   .btn-stop:hover { background: var(--red); color: #fff; }
-
-  .btn-download {
-    background: var(--blue-bg); color: var(--blue);
-    border: 1px solid var(--blue-border);
-    padding: 7px 14px; font-size: 10px;
-  }
+  .btn-download { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); padding: 7px 14px; font-size: 10px; }
   .btn-download:hover { background: var(--blue); color: #fff; }
-
-  .btn-delete {
-    background: var(--red-bg); color: var(--red);
-    border: 1px solid var(--red-border);
-    padding: 7px 14px; font-size: 10px;
-  }
+  .btn-delete { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); padding: 7px 14px; font-size: 10px; }
   .btn-delete:hover { background: var(--red); color: #fff; }
-
-  .btn-sm {
-    background: var(--surface2); color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 5px 12px; font-size: 10px;
-  }
+  .btn-sm { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); padding: 5px 12px; font-size: 10px; }
   .btn-sm:hover { border-color: var(--green); color: var(--green); }
 
-  /* ── Monitor cards ── */
+  /* Monitor cards */
   .monitor-list { display: flex; flex-direction: column; gap: 12px; }
 
   .monitor-card {
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    padding: 16px 18px;
-    display: flex; align-items: center; gap: 14px;
-    transition: border-color 0.3s;
+    border-radius: 10px; border: 1px solid var(--border);
+    padding: 16px 18px; transition: border-color 0.3s, background 0.3s;
   }
+  .monitor-card.state-listening { background: var(--green-bg); border-color: var(--green-border); }
+  .monitor-card.state-recording { background: var(--red-bg); border-color: var(--red-border); }
+  .monitor-card.state-starting { background: var(--amber-bg); border-color: var(--amber-border); }
 
-  .monitor-card.state-listening {
-    background: var(--green-bg);
-    border-color: var(--green-border);
-  }
+  .monitor-top { display: flex; align-items: center; gap: 12px; }
 
-  .monitor-card.state-recording {
-    background: var(--red-bg);
-    border-color: var(--red-border);
-  }
-
-  .monitor-card.state-unknown {
-    background: var(--amber-bg);
-    border-color: var(--amber-border);
-  }
-
-  .status-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%; flex-shrink: 0;
-  }
-
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .state-listening .status-dot { background: var(--green); }
   .state-recording .status-dot { background: var(--red); animation: blink 0.8s ease-in-out infinite; }
-  .state-unknown .status-dot { background: var(--amber); }
+  .state-starting .status-dot { background: var(--amber); animation: blink 1.2s ease-in-out infinite; }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; } 50% { opacity: 0.2; }
-  }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
 
   .monitor-info { flex: 1; min-width: 0; }
-
-  .monitor-url {
-    font-size: 13px; font-weight: 500;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
-  .monitor-state {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    margin-top: 3px;
-  }
-
+  .monitor-url { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .monitor-state { font-family: 'Space Mono', monospace; font-size: 11px; margin-top: 3px; }
   .state-listening .monitor-state { color: var(--green); }
   .state-recording .monitor-state { color: var(--red); }
-  .state-unknown .monitor-state { color: var(--amber); }
+  .state-starting .monitor-state { color: var(--amber); }
 
-  .monitor-elapsed {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    white-space: nowrap;
-    margin-right: 4px;
-  }
+  .monitor-elapsed { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; margin-right: 4px; }
 
-  /* ── Recording list ── */
+  /* Volume meter */
+  .vol-meter { margin-top: 12px; }
+  .vol-bar-track { background: #e8e8e4; border-radius: 4px; height: 6px; overflow: hidden; position: relative; }
+  .vol-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease, background 0.4s ease; }
+  .vol-labels { display: flex; justify-content: space-between; font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .vol-current { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+
+  /* Recordings */
   .rec-list { display: flex; flex-direction: column; gap: 8px; }
-
-  .rec-item {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    display: flex; align-items: center; gap: 12px;
-    transition: box-shadow 0.2s;
-  }
+  .rec-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: box-shadow 0.2s; }
   .rec-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-
-  .rec-icon {
-    width: 34px; height: 34px;
-    background: var(--red-bg);
-    border: 1px solid var(--red-border);
-    border-radius: 7px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
-  }
-
+  .rec-icon { width: 34px; height: 34px; background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
   .rec-info { flex: 1; min-width: 0; }
-
-  .rec-name {
-    font-size: 13px; font-weight: 500;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
-  .rec-meta {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px; color: var(--muted);
-    margin-top: 2px;
-  }
-
+  .rec-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rec-meta { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
   .rec-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
-  /* ── Section header ── */
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-  }
+  .btn-play { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); padding: 7px 14px; font-size: 10px; }
+  .btn-play:hover { background: var(--green); color: #fff; }
+  .btn-play.playing { background: var(--green); color: #fff; }
 
-  /* ── Empty state ── */
-  .empty {
-    text-align: center; padding: 40px;
-    color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 11px;
+  .audio-player {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: none;
   }
+  .audio-player.visible { display: block; }
+  .audio-player audio { width: 100%; height: 36px; outline: none; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; }
   .empty-icon { font-size: 30px; margin-bottom: 10px; opacity: 0.35; }
 
-  /* ── How it works banner ── */
-  .how-it-works {
-    background: var(--blue-bg);
-    border: 1px solid var(--blue-border);
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-size: 13px;
-    color: #1e40af;
-    margin-bottom: 20px;
-    display: flex; gap: 10px; align-items: flex-start;
-    line-height: 1.6;
-  }
-  .how-it-works span { flex-shrink: 0; font-size: 16px; }
+  .info-banner { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #1e40af; margin-bottom: 20px; display: flex; gap: 10px; line-height: 1.6; }
+  .info-banner span { flex-shrink: 0; font-size: 16px; }
 
-  /* ── Toast ── */
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    padding: 12px 20px; border-radius: 8px;
-    font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
-    z-index: 100; transform: translateY(80px); opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    background: var(--text); color: #fff;
-  }
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; z-index: 100; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 4px 16px rgba(0,0,0,0.15); background: var(--text); color: #fff; }
   .toast.show { transform: translateY(0); opacity: 1; }
   .toast.error { background: var(--red); }
   .toast.success { background: var(--green); }
 
   @media (max-width: 620px) {
     .header, .main { padding-left: 16px; padding-right: 16px; }
-    .input-row { flex-direction: column; }
+    .tuning-row { grid-template-columns: 1fr; }
     .rec-actions { flex-direction: column; }
   }
+
+  details summary { cursor: pointer; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; user-select: none; }
+  details summary:hover { color: var(--green); }
+  details[open] summary { margin-bottom: 14px; }
 </style>
 </head>
 <body>
@@ -328,30 +185,49 @@
   <div class="logo">📻</div>
   <div>
     <h1>Ad Recorder</h1>
-    <div class="header-sub">Records commercials automatically — ignores music</div>
+    <div class="header-sub">Auto-records commercials using volume detection</div>
   </div>
 </header>
 
 <main class="main">
 
-  <div class="how-it-works">
+  <div class="info-banner">
     <span>ℹ️</span>
-    <div>Paste a radio stream URL and click <strong>Start Monitoring</strong>. The app listens continuously and uses AI to detect when music switches to speech/ads. It automatically starts recording commercials and stops when music resumes. Completed recordings appear below for download.</div>
+    <div>Monitors a radio stream continuously. Uses ffmpeg to track volume levels — commercials are typically louder than music, or separated by brief silence gaps. Recording starts automatically when an ad break is detected and stops when music resumes.</div>
   </div>
 
-  <!-- Add stream -->
   <div class="card">
     <div class="card-label">Monitor a Stream</div>
     <div class="input-row">
       <div class="input-wrap">
         <label>Stream URL</label>
-        <input type="text" id="streamUrl" placeholder="http://stream.example.com:8000/radio or .m3u8 URL" />
+        <input type="text" id="streamUrl" placeholder="http://stream.example.com:8000/radio" />
       </div>
-      <button class="btn btn-start" onclick="startMonitor()">▶ &nbsp;START MONITORING</button>
+      <button class="btn btn-start" onclick="startMonitor()">▶ &nbsp;START</button>
     </div>
+
+    <details>
+      <summary>⚙ Detection Tuning (optional)</summary>
+      <div class="tuning-row">
+        <div>
+          <label>Silence threshold (dB)</label>
+          <input type="number" id="silenceThreshold" value="-40" step="1" />
+          <div class="tuning-hint">Below this = silence gap. Default -40</div>
+        </div>
+        <div>
+          <label>Ad boost (dB above avg)</label>
+          <input type="number" id="adBoostDb" value="3" step="0.5" />
+          <div class="tuning-hint">How much louder = ad. Default +3dB</div>
+        </div>
+        <div>
+          <label>Silence duration (sec)</label>
+          <input type="number" id="silenceDuration" value="0.5" step="0.1" />
+          <div class="tuning-hint">Gap length to trigger. Default 0.5s</div>
+        </div>
+      </div>
+    </details>
   </div>
 
-  <!-- Active monitors -->
   <div class="card" id="monitorsCard" style="display:none">
     <div class="section-header">
       <div class="card-label" style="margin:0">Active Monitors</div>
@@ -360,7 +236,6 @@
     <div class="monitor-list" id="monitorList"></div>
   </div>
 
-  <!-- Recordings -->
   <div class="card">
     <div class="section-header">
       <div class="card-label" style="margin:0">Captured Commercials</div>
@@ -405,30 +280,49 @@
     return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':');
   }
 
+  function dbToPercent(db) {
+    // Map -60dB → 0% to 0dB → 100%
+    if (db === null) return 0;
+    return Math.max(0, Math.min(100, ((db + 60) / 60) * 100));
+  }
+
+  function dbColor(db, baselineDb, adBoostDb) {
+    if (db === null) return '#ccc';
+    if (baselineDb !== null && db > baselineDb + adBoostDb) return '#c0392b'; // loud = ad
+    if (db < -40) return '#f59e0b'; // silence
+    return '#1a6b3c'; // normal music
+  }
+
   function stateLabel(m) {
     if (m.status === 'recording') return `⏺ RECORDING AD — ${elapsed(m.recordingStart)}`;
-    if (m.status === 'listening') return `🎵 LISTENING — ${m.label === 'music' ? 'Music playing' : m.label}`;
-    return m.label || m.status;
+    if (m.status === 'listening') {
+      const db = m.currentDb !== null ? ` (${m.currentDb} dB)` : '';
+      return `🎵 LISTENING${db}`;
+    }
+    return 'STARTING...';
   }
 
   function stateClass(m) {
     if (m.status === 'recording') return 'state-recording';
     if (m.status === 'listening') return 'state-listening';
-    return 'state-unknown';
+    return 'state-starting';
   }
 
   async function startMonitor() {
     const url = document.getElementById('streamUrl').value.trim();
     if (!url) return toast('Stream URL is required', 'error');
+    const silenceThreshold = parseFloat(document.getElementById('silenceThreshold').value);
+    const adBoostDb = parseFloat(document.getElementById('adBoostDb').value);
+    const silenceDuration = parseFloat(document.getElementById('silenceDuration').value);
     try {
       const res = await fetch(`${API}/api/monitor/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        body: JSON.stringify({ url, silenceThreshold, adBoostDb, silenceDuration })
       });
       const data = await res.json();
       if (data.error) return toast(data.error, 'error');
-      toast('Monitoring started — listening for ads', 'success');
+      toast('Monitoring started', 'success');
       document.getElementById('streamUrl').value = '';
       refreshStatus();
     } catch(e) {
@@ -463,6 +357,8 @@
     loadRecordings();
   }
 
+  let prevRecordingStates = {};
+
   async function refreshStatus() {
     try {
       const res = await fetch(`${API}/api/status`);
@@ -473,21 +369,39 @@
       if (!active.length) { card.style.display = 'none'; return; }
       card.style.display = 'block';
 
-      list.innerHTML = active.map(m => `
-        <div class="monitor-card ${stateClass(m)}">
-          <div class="status-dot"></div>
-          <div class="monitor-info">
-            <div class="monitor-url">${m.url}</div>
-            <div class="monitor-state">${stateLabel(m)}</div>
-          </div>
-          <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
-          <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
-        </div>
-      `).join('');
+      // Detect recording → listening transition to refresh recordings list
+      active.forEach(m => {
+        if (prevRecordingStates[m.id] === 'recording' && m.status === 'listening') {
+          setTimeout(loadRecordings, 1500);
+        }
+        prevRecordingStates[m.id] = m.status;
+      });
 
-      // If any monitor just finished a recording, reload the list
-      const wasRecording = active.some(m => m.status === 'recording');
-      if (!wasRecording) loadRecordings();
+      list.innerHTML = active.map(m => {
+        const pct = dbToPercent(parseFloat(m.currentDb));
+        const color = dbColor(parseFloat(m.currentDb), parseFloat(m.baselineDb), m.options.adBoostDb);
+        const baselineInfo = m.baselineDb ? `baseline ${m.baselineDb} dB` : 'calibrating...';
+        return `
+          <div class="monitor-card ${stateClass(m)}">
+            <div class="monitor-top">
+              <div class="status-dot"></div>
+              <div class="monitor-info">
+                <div class="monitor-url">${m.url}</div>
+                <div class="monitor-state">${stateLabel(m)}</div>
+              </div>
+              <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
+              <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
+            </div>
+            <div class="vol-meter">
+              <div class="vol-current">Volume: ${m.currentDb !== null ? m.currentDb + ' dB' : '—'} &nbsp;·&nbsp; ${baselineInfo}</div>
+              <div class="vol-bar-track">
+                <div class="vol-bar-fill" style="width:${pct}%;background:${color}"></div>
+              </div>
+              <div class="vol-labels"><span>-60 dB</span><span>-40 dB</span><span>-20 dB</span><span>0 dB</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
     } catch(e) {}
   }
 
@@ -496,29 +410,66 @@
       const res = await fetch(`${API}/api/recordings`);
       const files = await res.json();
       const list = document.getElementById('recList');
-
       if (!files.length) {
         list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>';
         return;
       }
-
-      list.innerHTML = files.map(f => `
-        <div class="rec-item">
+      list.innerHTML = files.map(f => {
+        const safeId = 'player_' + f.name.replace(/[^a-zA-Z0-9]/g, '_');
+        return `
+        <div class="rec-item" style="flex-wrap:wrap;">
           <div class="rec-icon">📢</div>
           <div class="rec-info">
             <div class="rec-name">${f.name}</div>
             <div class="rec-meta">${fmtSize(f.size)} &nbsp;·&nbsp; ${timeAgo(f.modified)}</div>
           </div>
           <div class="rec-actions">
+            <button class="btn btn-play" id="btn_${safeId}" onclick="togglePlay('${f.name}', '${safeId}')">▶ PLAY</button>
             <button class="btn btn-download" onclick="downloadRec('${f.name}')">⬇ DOWNLOAD</button>
             <button class="btn btn-delete" onclick="deleteRec('${f.name}')">DELETE</button>
           </div>
+          <div class="audio-player" id="${safeId}" style="width:100%">
+            <audio controls src="${API}/api/recordings/download/${encodeURIComponent(f.name)}"
+              onended="onAudioEnded('${safeId}')"></audio>
+          </div>
         </div>
-      `).join('');
+        `;
+      }).join('');
     } catch(e) {}
   }
 
-  setInterval(refreshStatus, 2500);
+
+  function togglePlay(name, safeId) {
+    const player = document.getElementById(safeId);
+    const btn = document.getElementById("btn_" + safeId);
+    const audio = player.querySelector("audio");
+    document.querySelectorAll(".audio-player.visible").forEach(p => {
+      if (p.id !== safeId) {
+        p.querySelector("audio").pause();
+        p.classList.remove("visible");
+        const b = document.getElementById("btn_" + p.id);
+        if (b) { b.innerHTML = "▶ PLAY"; b.classList.remove("playing"); }
+      }
+    });
+    if (player.classList.contains("visible")) {
+      audio.pause();
+      player.classList.remove("visible");
+      btn.innerHTML = "▶ PLAY";
+      btn.classList.remove("playing");
+    } else {
+      player.classList.add("visible");
+      audio.play();
+      btn.innerHTML = "⏸ PAUSE";
+      btn.classList.add("playing");
+    }
+  }
+
+  function onAudioEnded(safeId) {
+    const btn = document.getElementById("btn_" + safeId);
+    if (btn) { btn.innerHTML = "▶ PLAY"; btn.classList.remove("playing"); }
+  }
+
+  setInterval(refreshStatus, 2000);
   refreshStatus();
   loadRecordings();
 </script>

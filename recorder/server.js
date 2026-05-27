@@ -1,5 +1,5 @@
 const express = require('express');
-const { spawn, execSync } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
@@ -9,124 +9,159 @@ app.use(cors());
 app.use(express.json());
 
 const RECORDINGS_DIR = '/recordings';
-let monitors = {}; // active stream monitors
-
-// ── helpers ──────────────────────────────────────────────────────────────────
+let monitors = {};
 
 function ts() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 }
 
-function classify(pcmBuffer) {
-  // Write PCM to a temp wav, run python classifier, return label
-  const tmpWav = `/tmp/classify_${Date.now()}.wav`;
-  const tmpPcm = `/tmp/classify_${Date.now()}.pcm`;
-  try {
-    fs.writeFileSync(tmpPcm, pcmBuffer);
-    execSync(
-      `ffmpeg -y -f s16le -ar 16000 -ac 1 -i ${tmpPcm} ${tmpWav} 2>/dev/null`
-    );
-    const result = execSync(
-      `python3 /app/classify.py ${tmpWav}`,
-      { timeout: 8000 }
-    ).toString().trim();
-    return result; // "music" or "speech"
-  } catch (e) {
-    return 'unknown';
-  } finally {
-    try { fs.unlinkSync(tmpPcm); } catch(_) {}
-    try { fs.unlinkSync(tmpWav); } catch(_) {}
-  }
-}
+// ── Volume monitor ────────────────────────────────────────────────────────────
+// Uses ffmpeg astats filter to read mean volume every second.
+// Commercials are louder than music on most broadcast streams.
+// We track a rolling average and flag when current volume is significantly
+// above baseline (ad) or a silence gap occurs (transition).
 
-// ── monitor a stream ──────────────────────────────────────────────────────────
+function startMonitor(id, url, options = {}) {
+  const {
+    silenceThreshold = -40,   // dB — below this = silence (transition gap)
+    adBoostDb = 3,            // dB above rolling avg = likely ad
+    silenceDuration = 0.5,    // seconds of silence to trigger transition
+  } = options;
 
-function startMonitor(id, url) {
   const state = {
     id, url,
-    status: 'listening',   // listening | recording
-    label: 'starting',
+    status: 'listening',
+    currentDb: null,
+    baselineDb: null,
+    dbHistory: [],
     recordingFile: null,
     recordingStart: null,
-    ffmpegStream: null,    // stream reader process
-    ffmpegRec: null,       // recorder process
+    ffmpegMonitor: null,
+    ffmpegRec: null,
     startTime: new Date(),
-    chunks: [],
-    chunkTimer: null,
+    silenceStart: null,
+    lastTransition: 0,
+    options: { silenceThreshold, adBoostDb, silenceDuration },
   };
 
   monitors[id] = state;
 
-  // Continuously pull raw PCM from stream for classification
-  const reader = spawn('ffmpeg', [
+  // ffmpeg reads stream, outputs volume stats to stderr every 0.5s
+  const monitor = spawn('ffmpeg', [
     '-i', url,
     '-vn',
-    '-acodec', 'pcm_s16le',
-    '-ar', '16000',
-    '-ac', '1',
-    '-f', 's16le',
-    'pipe:1'
+    '-af', `astats=metadata=1:reset=1,ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-`,
+    '-f', 'null',
+    '-'
   ]);
 
-  state.ffmpegStream = reader;
+  state.ffmpegMonitor = monitor;
 
-  const CHUNK_BYTES = 16000 * 2 * 3; // 3 seconds of 16kHz mono s16le
-  let buf = Buffer.alloc(0);
+  let buf = '';
+  monitor.stderr.on('data', d => { buf += d.toString(); });
 
-  reader.stdout.on('data', (data) => {
-    buf = Buffer.concat([buf, data]);
-    while (buf.length >= CHUNK_BYTES) {
-      const chunk = buf.slice(0, CHUNK_BYTES);
-      buf = buf.slice(CHUNK_BYTES);
-      processChunk(state, chunk);
+  // Parse volume from stdout metadata output
+  monitor.stdout.on('data', d => {
+    const lines = (buf + d.toString()).split('\n');
+    buf = '';
+    for (const line of lines) {
+      const m = line.match(/lavfi\.astats\.Overall\.RMS_level=(.+)/);
+      if (m) {
+        const db = parseFloat(m[1]);
+        if (!isNaN(db) && isFinite(db)) {
+          processVolume(state, db);
+        }
+      }
     }
   });
 
-  reader.on('close', () => {
+  monitor.on('close', () => {
     if (monitors[id]) {
       monitors[id].status = 'stopped';
-      monitors[id].label = 'stream ended';
     }
   });
-
-  reader.stderr.on('data', () => {}); // suppress ffmpeg logs
 }
 
-function processChunk(state, chunk) {
-  const label = classify(chunk);
-  state.label = label;
+function processVolume(state, db) {
+  const now = Date.now();
+  state.currentDb = db;
 
-  const isCommercial = label === 'speech';
+  // Build rolling baseline (median of last 30 readings ≈ 15 seconds)
+  state.dbHistory.push(db);
+  if (state.dbHistory.length > 30) state.dbHistory.shift();
 
-  if (isCommercial && state.status === 'listening') {
-    // Start recording
-    state.status = 'recording';
-    const filename = `commercial-${ts()}.mp3`;
-    const outPath = path.join(RECORDINGS_DIR, filename);
-    state.recordingFile = filename;
-    state.recordingStart = new Date();
-
-    const rec = spawn('ffmpeg', [
-      '-i', state.url,
-      '-vn',
-      '-acodec', 'libmp3lame',
-      '-q:a', '2',
-      outPath
-    ]);
-    state.ffmpegRec = rec;
-    rec.stderr.on('data', () => {});
-
-  } else if (!isCommercial && state.status === 'recording') {
-    // Stop recording — music resumed
-    if (state.ffmpegRec) {
-      state.ffmpegRec.stdin.write('q');
-      state.ffmpegRec.kill('SIGTERM');
-      state.ffmpegRec = null;
-    }
-    state.status = 'listening';
-    state.recordingFile = null;
-    state.recordingStart = null;
+  // Baseline = median of history (robust to outliers)
+  const sorted = [...state.dbHistory].filter(v => v > -80).sort((a,b) => a-b);
+  if (sorted.length > 5) {
+    state.baselineDb = sorted[Math.floor(sorted.length / 2)];
   }
+
+  const { silenceThreshold, adBoostDb, silenceDuration } = state.options;
+  const COOLDOWN_MS = 8000; // min 8s between transitions
+
+  const isSilence = db < silenceThreshold;
+  const isLoud = state.baselineDb !== null && db > state.baselineDb + adBoostDb;
+
+  // Silence gap detection (transition marker)
+  if (isSilence) {
+    if (!state.silenceStart) state.silenceStart = now;
+    const silenceMs = now - state.silenceStart;
+
+    if (silenceMs >= silenceDuration * 1000 && now - state.lastTransition > COOLDOWN_MS) {
+      // Silence gap = transition between music and ad (or vice versa)
+      state.lastTransition = now;
+      if (state.status === 'listening') {
+        startRecording(state);
+      } else if (state.status === 'recording') {
+        stopRecording(state);
+      }
+    }
+  } else {
+    state.silenceStart = null;
+
+    // Volume spike = likely ad started (no silence gap on this stream)
+    if (isLoud && state.status === 'listening' && now - state.lastTransition > COOLDOWN_MS) {
+      state.lastTransition = now;
+      startRecording(state);
+    }
+
+    // Volume back to normal = music resumed
+    if (!isLoud && state.status === 'recording' &&
+        state.baselineDb !== null &&
+        db < state.baselineDb + (adBoostDb / 2) &&
+        now - state.lastTransition > COOLDOWN_MS) {
+      state.lastTransition = now;
+      stopRecording(state);
+    }
+  }
+}
+
+function startRecording(state) {
+  const filename = `commercial-${ts()}.mp3`;
+  const outPath = path.join(RECORDINGS_DIR, filename);
+  state.recordingFile = filename;
+  state.recordingStart = new Date();
+  state.status = 'recording';
+
+  const rec = spawn('ffmpeg', [
+    '-i', state.url,
+    '-vn',
+    '-acodec', 'libmp3lame',
+    '-q:a', '2',
+    outPath
+  ]);
+  state.ffmpegRec = rec;
+  rec.stderr.on('data', () => {});
+}
+
+function stopRecording(state) {
+  if (state.ffmpegRec) {
+    state.ffmpegRec.kill('SIGTERM');
+    state.ffmpegRec = null;
+  }
+  state.status = 'listening';
+  state.recordingFile = null;
+  state.recordingStart = null;
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -136,26 +171,28 @@ app.get('/api/status', (req, res) => {
     id: m.id,
     url: m.url,
     status: m.status,
-    label: m.label,
+    currentDb: m.currentDb ? m.currentDb.toFixed(1) : null,
+    baselineDb: m.baselineDb ? m.baselineDb.toFixed(1) : null,
     recordingFile: m.recordingFile,
     recordingStart: m.recordingStart,
     startTime: m.startTime,
+    options: m.options,
   }));
   res.json({ active });
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url } = req.body;
+  const { url, silenceThreshold, adBoostDb, silenceDuration } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url);
+  startMonitor(id, url, { silenceThreshold, adBoostDb, silenceDuration });
   res.json({ id, message: 'Monitoring started' });
 });
 
 app.post('/api/monitor/stop/:id', (req, res) => {
   const m = monitors[req.params.id];
   if (!m) return res.status(404).json({ error: 'Not found' });
-  if (m.ffmpegStream) m.ffmpegStream.kill('SIGTERM');
+  if (m.ffmpegMonitor) m.ffmpegMonitor.kill('SIGTERM');
   if (m.ffmpegRec) m.ffmpegRec.kill('SIGTERM');
   delete monitors[req.params.id];
   res.json({ message: 'Stopped' });
@@ -163,7 +200,7 @@ app.post('/api/monitor/stop/:id', (req, res) => {
 
 app.post('/api/monitor/stopall', (req, res) => {
   Object.values(monitors).forEach(m => {
-    if (m.ffmpegStream) m.ffmpegStream.kill('SIGTERM');
+    if (m.ffmpegMonitor) m.ffmpegMonitor.kill('SIGTERM');
     if (m.ffmpegRec) m.ffmpegRec.kill('SIGTERM');
   });
   monitors = {};
@@ -196,4 +233,4 @@ app.delete('/api/recordings/:name', (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
-app.listen(3000, () => console.log('Recorder API on :3000'));
+app.listen(3000, () => console.log('Ad Recorder API on :3000'));
