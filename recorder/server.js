@@ -162,6 +162,7 @@ function startMonitor(id, url, options = {}) {
     pollInterval = 10,
     stallThreshold = 60,
     metadataUrl = null,
+    stationName = '',
   } = options;
 
   const state = {
@@ -179,7 +180,7 @@ function startMonitor(id, url, options = {}) {
     ffmpegRec: null,
     startTime: new Date(),
     interval: null,
-    options: { pollInterval, stallThreshold, metadataUrl },
+    options: { pollInterval, stallThreshold, metadataUrl, stationName },
     titleHistory: [],
   };
 
@@ -232,7 +233,10 @@ function startMonitor(id, url, options = {}) {
 }
 
 function beginRecording(state) {
-  const filename = `commercial-${ts()}.mp3`;
+  const slug = state.options.stationName
+    ? state.options.stationName.trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+    : 'commercial';
+  const filename = `${slug}-${ts()}.mp3`;
   const outPath = path.join(RECORDINGS_DIR, filename);
   state.recordingFile = filename;
   state.recordingStart = new Date();
@@ -288,10 +292,10 @@ app.get('/api/status', (req, res) => {
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, pollInterval, stallThreshold, metadataUrl } = req.body;
+  const { url, pollInterval, stallThreshold, metadataUrl, stationName } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null });
+  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '' });
   res.json({ id, message: 'Monitoring started' });
 });
 

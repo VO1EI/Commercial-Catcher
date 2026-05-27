@@ -196,7 +196,11 @@
     <div class="input-row">
       <div class="input-wrap">
         <label>Stream URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(audio)</span></label>
-        <input type="text" id="streamUrl" placeholder="https://mbsradio.leanstream.co/CKENFM-MP3?args=web_02" />
+        <input type="text" id="streamUrl" placeholder="URL" />
+      </div>
+      <div style="width:200px">
+        <label>Station Name</label>
+        <input type="text" id="stationName" placeholder="Name" />
       </div>
       <button class="btn btn-start" onclick="startMonitor()">▶ &nbsp;START</button>
     </div>
@@ -207,7 +211,7 @@
           — optional, if song titles come from a different URL than the audio stream
         </span>
       </label>
-      <input type="text" id="metadataUrl" placeholder="e.g. https://mbsradio.leanstream.co/CKENFM-NP3?args=web_02  (leave blank to read from stream)" />
+      <input type="text" id="metadataUrl" placeholder="Metadata URL" />
     </div>
     <details>
       <summary>⚙ Tuning (optional)</summary>
@@ -307,19 +311,21 @@
     const url = document.getElementById('streamUrl').value.trim();
     if (!url) return toast('Stream URL is required', 'error');
     const metadataUrl = document.getElementById('metadataUrl').value.trim() || null;
+    const stationName = document.getElementById('stationName').value.trim() || '';
     const pollInterval = parseInt(document.getElementById('pollInterval').value) || 10;
     const stallThreshold = parseInt(document.getElementById('stallThreshold').value) || 60;
     try {
       const res = await fetch(`${API}/api/monitor/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, metadataUrl, pollInterval, stallThreshold })
+        body: JSON.stringify({ url, metadataUrl, pollInterval, stallThreshold, stationName })
       });
       const data = await res.json();
       if (data.error) return toast(data.error, 'error');
       toast('Monitoring started', 'success');
       document.getElementById('streamUrl').value = '';
       document.getElementById('metadataUrl').value = '';
+      document.getElementById('stationName').value = '';
       refreshStatus();
     } catch(e) {
       toast('Could not connect to recorder service', 'error');
@@ -439,7 +445,7 @@
             <div class="monitor-top">
               <div class="status-dot"></div>
               <div class="monitor-info">
-                <div class="monitor-url">${m.station ? m.station + ' — ' : ''}${m.url}</div>
+                <div class="monitor-url">${m.options.stationName ? '<strong>' + m.options.stationName + '</strong> — ' : (m.station ? m.station + ' — ' : '')}${m.url}</div>
                 <div class="monitor-status-line">${stateLabel(m)}</div>
               </div>
               <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
