@@ -13,7 +13,17 @@ app.use(express.json());
 
 const RECORDINGS_DIR = '/recordings';
 const LOGOS_DIR = '/recordings/logos';
+const STATIONS_FILE = '/recordings/stations.json';
 let monitors = {};
+
+function loadStationsData() {
+  try { return JSON.parse(fs.readFileSync(STATIONS_FILE, 'utf8')); }
+  catch(_) { return []; }
+}
+
+function saveStationsData(stations) {
+  fs.writeFileSync(STATIONS_FILE, JSON.stringify(stations, null, 2));
+}
 
 // Ensure logos dir exists
 if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
@@ -406,6 +416,30 @@ app.delete('/api/logos/:station', (req, res) => {
   const match = files.find(f => f.startsWith(req.params.station + '.') || f === req.params.station);
   if (!match) return res.status(404).json({ error: 'Not found' });
   fs.unlinkSync(path.join(LOGOS_DIR, match));
+  res.json({ message: 'Deleted' });
+});
+
+// ── Station config CRUD ───────────────────────────────────────────────────────
+
+app.get('/api/stations', (req, res) => {
+  res.json(loadStationsData());
+});
+
+app.post('/api/stations', (req, res) => {
+  const { name, streamUrl, metadataUrl, pollInterval, stallThreshold, triggerMode, triggerKeywords } = req.body;
+  if (!name || !streamUrl) return res.status(400).json({ error: 'name and streamUrl required' });
+  const stations = loadStationsData();
+  const existing = stations.findIndex(s => s.name === name);
+  const station = { name, streamUrl, metadataUrl: metadataUrl || '', pollInterval: pollInterval || 10, stallThreshold: stallThreshold || 60, triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '' };
+  if (existing >= 0) stations[existing] = station;
+  else stations.push(station);
+  saveStationsData(stations);
+  res.json({ message: 'Saved', station });
+});
+
+app.delete('/api/stations/:name', (req, res) => {
+  const stations = loadStationsData().filter(s => s.name !== req.params.name);
+  saveStationsData(stations);
   res.json({ message: 'Deleted' });
 });
 

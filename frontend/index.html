@@ -7,223 +7,176 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f5f2;
-    --surface: #ffffff;
-    --surface2: #f9f9f6;
-    --border: #e4e4dc;
-    --text: #1a1a1a;
-    --muted: #999;
-    --green: #1a6b3c;
-    --green-bg: #edf7f2;
-    --green-border: #b8dfc9;
-    --red: #c0392b;
-    --red-bg: #fdf0ee;
-    --red-border: #f5c6c2;
-    --amber: #b45309;
-    --amber-bg: #fef9ec;
-    --amber-border: #fcd97a;
-    --blue: #1d4ed8;
-    --blue-bg: #eff6ff;
-    --blue-border: #bfdbfe;
-    --toggle-bg: #e4e4dc;
+    --bg:#f5f5f2;--surface:#fff;--surface2:#f9f9f6;--border:#e4e4dc;
+    --text:#1a1a1a;--muted:#999;
+    --green:#1a6b3c;--green-bg:#edf7f2;--green-border:#b8dfc9;
+    --red:#c0392b;--red-bg:#fdf0ee;--red-border:#f5c6c2;
+    --amber:#b45309;--amber-bg:#fef9ec;--amber-border:#fcd97a;
+    --blue:#1d4ed8;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+    --toggle-bg:#e4e4dc;
   }
-
   [data-theme="dark"] {
-    --bg: #111111;
-    --surface: #1a1a1a;
-    --surface2: #222222;
-    --border: #333333;
-    --text: #f0f0f0;
-    --muted: #777;
-    --green: #4ade80;
-    --green-bg: #052e16;
-    --green-border: #166534;
-    --red: #f87171;
-    --red-bg: #2d0f0f;
-    --red-border: #7f1d1d;
-    --amber: #fbbf24;
-    --amber-bg: #1c0f00;
-    --amber-border: #78350f;
-    --blue: #60a5fa;
-    --blue-bg: #0f1c3a;
-    --blue-border: #1e3a5f;
-    --toggle-bg: #333333;
+    --bg:#111;--surface:#1a1a1a;--surface2:#222;--border:#333;
+    --text:#f0f0f0;--muted:#777;
+    --green:#4ade80;--green-bg:#052e16;--green-border:#166534;
+    --red:#f87171;--red-bg:#2d0f0f;--red-border:#7f1d1d;
+    --amber:#fbbf24;--amber-bg:#1c0f00;--amber-border:#78350f;
+    --blue:#60a5fa;--blue-bg:#0f1c3a;--blue-border:#1e3a5f;
+    --toggle-bg:#333;
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;transition:background .2s,color .2s}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; transition: background 0.2s, color 0.2s; }
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 40px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10}
+  .logo-mark{width:32px;height:32px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  h1{font-family:'Space Mono',monospace;font-size:15px;letter-spacing:-.3px}
+  .header-sub{font-size:12px;color:var(--muted);margin-top:1px}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .theme-toggle{width:44px;height:24px;background:var(--toggle-bg);border-radius:12px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+  .theme-toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  [data-theme="dark"] .theme-toggle::after{transform:translateX(20px)}
+  [data-theme="dark"] .theme-toggle{background:var(--green)}
+  .theme-label{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace}
 
-  .header {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 16px 40px; display: flex; align-items: center; gap: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: sticky; top: 0; z-index: 10;
-  }
-  .logo-mark { width: 32px; height: 32px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-  h1 { font-family: 'Space Mono', monospace; font-size: 15px; letter-spacing: -0.3px; }
-  .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .main{max-width:880px;margin:0 auto;padding:32px 40px}
 
-  /* Dark mode toggle */
-  .theme-toggle {
-    width: 44px; height: 24px; background: var(--toggle-bg); border-radius: 12px;
-    border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0;
-  }
-  .theme-toggle::after {
-    content: ''; position: absolute; top: 3px; left: 3px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: var(--surface); transition: transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-  [data-theme="dark"] .theme-toggle::after { transform: translateX(20px); }
-  [data-theme="dark"] .theme-toggle { background: var(--green); }
-  .theme-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:24px;width:fit-content}
+  .tab{padding:7px 18px;border-radius:7px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.5px;transition:all .15s}
+  .tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 
-  .main { max-width: 880px; margin: 0 auto; padding: 32px 40px; }
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
 
-  .tabs { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 24px; width: fit-content; }
-  .tab { padding: 7px 18px; border-radius: 7px; border: none; background: transparent; color: var(--muted); cursor: pointer; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.15s; }
-  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 28px;margin-bottom:20px}
+  .card-label{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:18px}
 
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  .input-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px}
+  .input-wrap{flex:1}
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:1px}
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 24px 28px; margin-bottom: 20px;
-  }
-  .card-label { font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 18px; }
+  input[type=text],input[type=number],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
+  input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(26,107,60,.1)}
+  input::placeholder,textarea::placeholder{color:var(--muted);opacity:.5}
+  select option{background:var(--surface2);color:var(--text)}
 
-  .input-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
-  .input-wrap { flex: 1; }
+  .tuning-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tuning-hint{font-size:11px;color:var(--muted);margin-top:5px}
 
-  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.5px;transition:all .15s;white-space:nowrap}
+  .btn-start{background:var(--green);color:#fff;padding:10px 22px}
+  .btn-start:hover{opacity:.88;transform:translateY(-1px)}
+  .btn-stop{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);padding:7px 14px;font-size:10px}
+  .btn-stop:hover{background:var(--red);color:#fff}
+  .btn-play{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);padding:7px 14px;font-size:10px}
+  .btn-play:hover,.btn-play.playing{background:var(--green);color:#fff}
+  .btn-download{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);padding:7px 14px;font-size:10px}
+  .btn-download:hover{background:var(--blue);color:#fff}
+  .btn-delete{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);padding:7px 14px;font-size:10px}
+  .btn-delete:hover{background:var(--red);color:#fff}
+  .btn-sm{background:var(--surface2);color:var(--muted);border:1px solid var(--border);padding:5px 12px;font-size:10px}
+  .btn-sm:hover{border-color:var(--green);color:var(--green)}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:10px 18px}
+  .btn-secondary:hover{border-color:var(--green);color:var(--green)}
 
-  input[type=text], input[type=number], select {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 14px; padding: 10px 14px; outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,107,60,0.1); }
-  input::placeholder { color: var(--muted); opacity: 0.5; }
-  select option { background: var(--surface2); color: var(--text); }
-
-  .tuning-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .tuning-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
-
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer;
-    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
-    letter-spacing: 0.5px; transition: all 0.15s; white-space: nowrap;
-  }
-  .btn-start { background: var(--green); color: #fff; padding: 10px 22px; }
-  .btn-start:hover { opacity: 0.88; transform: translateY(-1px); }
-  .btn-stop { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); padding: 7px 14px; font-size: 10px; }
-  .btn-stop:hover { background: var(--red); color: #fff; }
-  .btn-play { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); padding: 7px 14px; font-size: 10px; }
-  .btn-play:hover, .btn-play.playing { background: var(--green); color: #fff; }
-  .btn-download { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); padding: 7px 14px; font-size: 10px; }
-  .btn-download:hover { background: var(--blue); color: #fff; }
-  .btn-delete { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); padding: 7px 14px; font-size: 10px; }
-  .btn-delete:hover { background: var(--red); color: #fff; }
-  .btn-sm { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); padding: 5px 12px; font-size: 10px; }
-  .btn-sm:hover { border-color: var(--green); color: var(--green); }
-  .btn-upload { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; font-size: 11px; cursor: pointer; }
-  .btn-upload:hover { border-color: var(--green); color: var(--green); }
+  /* Quick launch */
+  .quick-launch{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px}
+  .quick-launch-label{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px}
+  .station-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .station-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;text-align:left;width:100%}
+  .station-btn:hover{border-color:var(--green);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .station-btn-logo{width:34px;height:34px;border-radius:6px;object-fit:contain;border:1px solid var(--border);background:var(--surface2);padding:2px;flex-shrink:0}
+  .station-btn-placeholder{width:34px;height:34px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);flex-shrink:0}
+  .station-btn-info{min-width:0}
+  .station-btn-name{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .station-btn-sub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 
   /* Monitor cards */
-  .monitor-list { display: flex; flex-direction: column; gap: 14px; }
-  .monitor-card { border-radius: 10px; border: 1px solid var(--border); padding: 16px 18px; transition: border-color 0.3s, background 0.3s; }
-  .monitor-card.state-listening { background: var(--green-bg); border-color: var(--green-border); }
-  .monitor-card.state-recording { background: var(--red-bg); border-color: var(--red-border); }
-  .monitor-card.state-starting { background: var(--amber-bg); border-color: var(--amber-border); }
-
-  .monitor-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .state-listening .status-dot { background: var(--green); }
-  .state-recording .status-dot { background: var(--red); animation: blink 0.8s ease-in-out infinite; }
-  .state-starting .status-dot { background: var(--amber); animation: blink 1.2s ease-in-out infinite; }
-  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
-
-  .station-logo { width: 36px; height: 36px; border-radius: 6px; object-fit: contain; flex-shrink: 0; border: 1px solid var(--border); background: var(--surface); padding: 2px; }
-  .station-logo-placeholder { width: 36px; height: 36px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); flex-shrink: 0; text-align: center; line-height: 1.2; padding: 2px; }
-
-  .monitor-info { flex: 1; min-width: 0; }
-  .monitor-url { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .monitor-status-line { font-family: 'Space Mono', monospace; font-size: 11px; margin-top: 3px; }
-  .state-listening .monitor-status-line { color: var(--green); }
-  .state-recording .monitor-status-line { color: var(--red); }
-  .state-starting .monitor-status-line { color: var(--amber); }
-  .monitor-elapsed { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; margin-right: 4px; }
-
-  .meta-panel { background: rgba(255,255,255,0.25); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; }
-  [data-theme="dark"] .meta-panel { background: rgba(0,0,0,0.2); }
-  .meta-item { min-width: 0; }
-  .meta-key { font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 3px; }
-  .meta-val { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  .title-history { margin-top: 10px; }
-  .history-label { font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
-  .history-list { display: flex; flex-direction: column; gap: 3px; }
-  .history-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-  .history-time { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); flex-shrink: 0; }
-  .history-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .monitor-list{display:flex;flex-direction:column;gap:14px}
+  .monitor-card{border-radius:10px;border:1px solid var(--border);padding:16px 18px;transition:border-color .3s,background .3s}
+  .monitor-card.state-listening{background:var(--green-bg);border-color:var(--green-border)}
+  .monitor-card.state-recording{background:var(--red-bg);border-color:var(--red-border)}
+  .monitor-card.state-starting{background:var(--amber-bg);border-color:var(--amber-border)}
+  .monitor-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .state-listening .status-dot{background:var(--green)}
+  .state-recording .status-dot{background:var(--red);animation:blink .8s ease-in-out infinite}
+  .state-starting .status-dot{background:var(--amber);animation:blink 1.2s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .station-logo{width:36px;height:36px;border-radius:6px;object-fit:contain;flex-shrink:0;border:1px solid var(--border);background:var(--surface);padding:2px}
+  .station-logo-placeholder{width:36px;height:36px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);flex-shrink:0;text-align:center;padding:2px}
+  .monitor-info{flex:1;min-width:0}
+  .monitor-url{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .monitor-status-line{font-family:'Space Mono',monospace;font-size:11px;margin-top:3px}
+  .state-listening .monitor-status-line{color:var(--green)}
+  .state-recording .monitor-status-line{color:var(--red)}
+  .state-starting .monitor-status-line{color:var(--amber)}
+  .monitor-elapsed{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;margin-right:4px}
+  .meta-panel{background:rgba(255,255,255,.25);border-radius:8px;padding:12px 14px;display:grid;gap:10px}
+  [data-theme="dark"] .meta-panel{background:rgba(0,0,0,.2)}
+  .meta-item{min-width:0}
+  .meta-key{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px}
+  .meta-val{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .title-history{margin-top:10px}
+  .history-label{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+  .history-list{display:flex;flex-direction:column;gap:3px}
+  .history-item{display:flex;align-items:center;gap:8px;font-size:12px}
+  .history-time{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0}
+  .history-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* Recordings */
-  .rec-list { display: flex; flex-direction: column; gap: 8px; }
-  .rec-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .rec-icon { width: 34px; height: 34px; background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-  .rec-icon img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
-  .rec-icon span { font-size: 16px; }
-  .rec-info { flex: 1; min-width: 0; }
-  .rec-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rec-meta { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .rec-actions { display: flex; gap: 6px; flex-shrink: 0; }
-  .audio-player { width: 100%; display: none; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .audio-player.visible { display: block; }
-  .audio-player audio { width: 100%; height: 36px; outline: none; }
+  .rec-list{display:flex;flex-direction:column;gap:8px}
+  .rec-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .rec-icon{width:34px;height:34px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+  .rec-icon img{width:100%;height:100%;object-fit:contain;padding:3px}
+  .rec-info{flex:1;min-width:0}
+  .rec-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rec-meta{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px}
+  .rec-actions{display:flex;gap:6px;flex-shrink:0}
+  .audio-player{width:100%;display:none;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
+  .audio-player.visible{display:block}
+  .audio-player audio{width:100%;height:36px;outline:none}
 
-  /* Station manager */
-  .station-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .station-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
-  .station-card-logo { width: 56px; height: 56px; border-radius: 8px; object-fit: contain; border: 1px solid var(--border); background: var(--surface); padding: 4px; }
-  .station-card-placeholder { width: 56px; height: 56px; border-radius: 8px; background: var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
-  .station-card-name { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; }
-  .station-card-del { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
-  .station-card-del:hover { background: var(--red); color: #fff; }
+  /* Stations tab */
+  .station-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+  .station-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+  .station-card-logo{width:56px;height:56px;border-radius:8px;object-fit:contain;border:1px solid var(--border);background:var(--surface);padding:4px}
+  .station-card-placeholder{width:56px;height:56px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)}
+  .station-card-name{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-align:center}
+  .station-card-meta{font-size:11px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .station-card-actions{display:flex;gap:6px;margin-top:4px}
+  .station-card-del{padding:5px 10px;font-size:10px}
+  .station-card-edit{padding:5px 10px;font-size:10px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);border-radius:6px;cursor:pointer;font-family:'Space Mono',monospace;font-weight:700}
+  .station-card-edit:hover{background:var(--blue);color:#fff}
 
-  .upload-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
-  .upload-zone:hover { border-color: var(--green); }
-  .upload-zone input { display: none; }
-  .upload-zone-text { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .upload-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s}
+  .upload-zone:hover{border-color:var(--green)}
+  .upload-zone input{display:none}
+  .upload-zone-text{font-size:13px;color:var(--muted);margin-top:8px}
 
-  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .empty{text-align:center;padding:40px;color:var(--muted);font-family:'Space Mono',monospace;font-size:11px}
+  .empty-icon{font-size:30px;margin-bottom:10px;opacity:.35}
+  .info-banner{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--blue);margin-bottom:20px;display:flex;gap:10px;line-height:1.6}
+  .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:8px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;z-index:100;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);background:var(--text);color:var(--surface)}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.error{background:var(--red);color:#fff}
+  .toast.success{background:var(--green);color:#fff}
 
-  .empty { text-align: center; padding: 40px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; }
-  .empty-icon { font-size: 30px; margin-bottom: 10px; opacity: 0.35; }
+  details summary{cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;user-select:none}
+  details summary:hover{color:var(--green)}
+  details[open] summary{margin-bottom:14px}
 
-  .info-banner { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--blue); margin-bottom: 20px; display: flex; gap: 10px; line-height: 1.6; }
+  .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 
-  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; z-index: 100; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); background: var(--text); color: var(--surface); }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.error { background: var(--red); color: #fff; }
-  .toast.success { background: var(--green); color: #fff; }
-
-  details summary { cursor: pointer; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; user-select: none; }
-  details summary:hover { color: var(--green); }
-  details[open] summary { margin-bottom: 14px; }
-
-  @media (max-width: 620px) {
-    .header, .main { padding-left: 16px; padding-right: 16px; }
-    .tuning-row { grid-template-columns: 1fr; }
-    .rec-actions { flex-wrap: wrap; }
-    .input-row { flex-direction: column; }
+  @media(max-width:620px){
+    .header,.main{padding-left:16px;padding-right:16px}
+    .tuning-row{grid-template-columns:1fr}
+    .rec-actions{flex-wrap:wrap}
+    .input-row{flex-direction:column}
   }
 </style>
 </head>
 <body>
-
 <header class="header">
   <div class="logo-mark">📻</div>
   <div>
@@ -237,7 +190,6 @@
 </header>
 
 <main class="main">
-
   <div class="tabs">
     <button class="tab active" onclick="switchTab('monitor')">MONITOR</button>
     <button class="tab" onclick="switchTab('recordings')">RECORDINGS</button>
@@ -247,37 +199,33 @@
   <!-- MONITOR TAB -->
   <div class="tab-panel active" id="tab-monitor">
 
-    <div class="info-banner">
-      <span>ℹ️</span>
-      <div>Monitors stream metadata and records automatically when the title disappears or matches ad keywords. Music resumes → recording stops.</div>
+    <!-- Quick launch -->
+    <div class="quick-launch" id="quickLaunch" style="display:none">
+      <div class="quick-launch-label">Saved Stations — click to start monitoring</div>
+      <div class="station-list" id="quickStationList"></div>
     </div>
 
+    <!-- Manual form -->
     <div class="card">
-      <div class="card-label">New Monitor</div>
+      <div class="card-label">Manual Setup</div>
       <div class="input-row">
         <div class="input-wrap">
           <label>Stream URL</label>
           <input type="text" id="streamUrl" placeholder="URL" />
         </div>
-        <div style="width:180px">
+        <div style="width:160px">
           <label>Station Name</label>
-          <select id="stationSelect" onchange="onStationSelect()">
-            <option value="">— select or type —</option>
-          </select>
-        </div>
-        <div style="width:140px">
-          <label>Custom name</label>
           <input type="text" id="stationName" placeholder="Name" />
         </div>
         <button class="btn btn-start" onclick="startMonitor()">▶ START</button>
       </div>
-      <div style="margin-bottom:16px">
+      <div style="margin-bottom:14px">
         <label>Metadata URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— optional JSON endpoint</span></label>
         <input type="text" id="metadataUrl" placeholder="Metadata URL" />
       </div>
       <details>
         <summary>⚙ Tuning (optional)</summary>
-        <div class="tuning-row" style="margin-bottom:14px">
+        <div class="tuning-row" style="margin-bottom:14px;margin-top:2px">
           <div>
             <label>Poll interval (seconds)</label>
             <input type="number" id="pollInterval" value="10" min="3" step="1" />
@@ -300,13 +248,14 @@
         </div>
         <div id="keywordOptions" class="tuning-row" style="display:none">
           <div style="grid-column:1/-1">
-            <label>Keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— comma separated, blank = trigger on empty title</span></label>
-            <input type="text" id="triggerKeywords" placeholder="Metadata URL" />
+            <label>Keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— comma separated, blank = empty title only</span></label>
+            <input type="text" id="triggerKeywords" placeholder="Keywords" />
           </div>
         </div>
       </details>
     </div>
 
+    <!-- Active monitors -->
     <div class="card" id="monitorsCard" style="display:none">
       <div class="section-header">
         <div class="card-label" style="margin:0">Active Monitors</div>
@@ -314,7 +263,6 @@
       </div>
       <div class="monitor-list" id="monitorList"></div>
     </div>
-
   </div>
 
   <!-- RECORDINGS TAB -->
@@ -333,32 +281,76 @@
   <!-- STATIONS TAB -->
   <div class="tab-panel" id="tab-stations">
     <div class="card">
-      <div class="card-label">Station Logos</div>
+      <div class="section-header">
+        <div class="card-label" style="margin:0">Saved Stations</div>
+      </div>
       <div class="station-grid" id="stationGrid">
-        <div class="empty" style="grid-column:1/-1;padding:20px">No stations yet</div>
+        <div class="empty" style="grid-column:1/-1;padding:20px">No stations saved yet</div>
       </div>
 
-      <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px">
-        <div class="card-label">Add Station</div>
-        <div class="input-row" style="margin-bottom:12px">
-          <div class="input-wrap">
-            <label>Station Name</label>
-            <input type="text" id="newStationName" placeholder="Name" />
-          </div>
+      <hr class="divider">
+
+      <div class="card-label" id="stationFormLabel">Add Station</div>
+      <input type="hidden" id="editingStation" value="">
+
+      <div class="input-row" style="margin-bottom:14px">
+        <div class="input-wrap">
+          <label>Station Name</label>
+          <input type="text" id="newStationName" placeholder="Name" />
         </div>
+        <div class="input-wrap">
+          <label>Stream URL</label>
+          <input type="text" id="newStreamUrl" placeholder="URL" />
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label>Metadata URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— optional</span></label>
+        <input type="text" id="newMetadataUrl" placeholder="Metadata URL" />
+      </div>
+      <div class="tuning-row" style="margin-bottom:14px">
+        <div>
+          <label>Poll interval (seconds)</label>
+          <input type="number" id="newPollInterval" value="10" min="3" step="1" />
+        </div>
+        <div>
+          <label>Trigger mode</label>
+          <select id="newTriggerMode" onchange="toggleNewTriggerMode()">
+            <option value="stall">Stall threshold</option>
+            <option value="keyword">Blank / keyword</option>
+          </select>
+        </div>
+      </div>
+      <div id="newStallOptions" class="tuning-row" style="margin-bottom:14px">
+        <div>
+          <label>Stall threshold (seconds)</label>
+          <input type="number" id="newStallThreshold" value="60" min="10" step="5" />
+        </div>
+      </div>
+      <div id="newKeywordOptions" class="tuning-row" style="display:none;margin-bottom:14px">
+        <div style="grid-column:1/-1">
+          <label>Keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— blank = trigger on empty title</span></label>
+          <input type="text" id="newTriggerKeywords" placeholder="Keywords" />
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label>Station Logo</label>
         <div class="upload-zone" onclick="document.getElementById('logoFile').click()">
-          <input type="file" id="logoFile" accept="image/*" onchange="uploadLogo()">
-          <div style="font-size:28px;opacity:0.4">🖼</div>
+          <input type="file" id="logoFile" accept="image/*" onchange="previewLogo()">
+          <div style="font-size:24px;opacity:.4">🖼</div>
           <div class="upload-zone-text">Click to upload logo (PNG, JPG, SVG — max 2MB)</div>
           <div id="uploadPreview" style="margin-top:10px;display:none">
             <img id="previewImg" style="height:48px;border-radius:6px;border:1px solid var(--border)" />
           </div>
         </div>
-        <button class="btn btn-start" style="margin-top:12px;width:100%;justify-content:center" onclick="saveStation()">SAVE STATION</button>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-start" style="flex:1;justify-content:center" onclick="saveStation()">SAVE STATION</button>
+        <button class="btn btn-secondary" id="cancelEditBtn" style="display:none" onclick="cancelEdit()">CANCEL</button>
       </div>
     </div>
   </div>
-
 </main>
 
 <div class="toast" id="toast"></div>
@@ -366,8 +358,9 @@
 <script>
 const API = '';
 let logos = {};
+let savedStations = [];
 
-function toast(msg, type = '') {
+function toast(msg, type='') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast show' + (type ? ' ' + type : '');
@@ -404,13 +397,13 @@ function timeAgo(d) {
 }
 
 function fmtTime(d) {
-  return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return new Date(d).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 function elapsed(start) {
   const s = Math.floor((Date.now() - new Date(start)) / 1000);
   const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':');
+  return [h,m,sec].map(v => String(v).padStart(2,'0')).join(':');
 }
 
 function staleFor(ts) {
@@ -431,16 +424,16 @@ function stateClass(m) {
   return 'state-starting';
 }
 
-function getLogoUrl(stationName) {
-  if (!stationName) return null;
-  const slug = stationName.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
-  return logos[slug] || logos[stationName] || null;
+function getLogoUrl(name) {
+  if (!name) return null;
+  const slug = name.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+  return logos[slug] || logos[name] || null;
 }
 
-function stationLogoHtml(stationName, size = 36) {
-  const url = getLogoUrl(stationName);
-  if (url) return `<img src="${url}" class="station-logo" style="width:${size}px;height:${size}px" alt="${stationName}">`;
-  if (stationName) return `<div class="station-logo-placeholder" style="width:${size}px;height:${size}px">${stationName.substring(0,4)}</div>`;
+function stationLogoHtml(name, size=36) {
+  const url = getLogoUrl(name);
+  if (url) return `<img src="${url}" class="station-logo" style="width:${size}px;height:${size}px" alt="${name || ''}">`;
+  if (name) return `<div class="station-logo-placeholder" style="width:${size}px;height:${size}px">${name.substring(0,4)}</div>`;
   return '';
 }
 
@@ -450,49 +443,97 @@ function toggleTriggerMode() {
   document.getElementById('keywordOptions').style.display = mode === 'keyword' ? '' : 'none';
 }
 
-function onStationSelect() {
-  const val = document.getElementById('stationSelect').value;
-  if (val) document.getElementById('stationName').value = val;
+function toggleNewTriggerMode() {
+  const mode = document.getElementById('newTriggerMode').value;
+  document.getElementById('newStallOptions').style.display = mode === 'stall' ? '' : 'none';
+  document.getElementById('newKeywordOptions').style.display = mode === 'keyword' ? '' : 'none';
 }
+
+// ── Quick launch ──────────────────────────────────────────────────────────────
+
+function renderQuickLaunch() {
+  const wrap = document.getElementById('quickLaunch');
+  const list = document.getElementById('quickStationList');
+  if (!savedStations.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  list.innerHTML = savedStations.map(s => {
+    const logoUrl = getLogoUrl(s.name);
+    const logoEl = logoUrl
+      ? `<img src="${logoUrl}" class="station-btn-logo" alt="${s.name}">`
+      : `<div class="station-btn-placeholder">${s.name.substring(0,4)}</div>`;
+    const sub = s.triggerMode === 'keyword' ? 'Blank/keyword' : 'Stall ' + s.stallThreshold + 's';
+    return `
+      <button class="station-btn" onclick="launchStation(${JSON.stringify(s.name).replace(/"/g,'&quot;')})">
+        ${logoEl}
+        <div class="station-btn-info">
+          <div class="station-btn-name">${s.name}</div>
+          <div class="station-btn-sub">${sub} · poll ${s.pollInterval}s</div>
+        </div>
+      </button>`;
+  }).join('');
+}
+
+async function launchStation(name) {
+  const s = savedStations.find(x => x.name === name);
+  if (!s) return;
+  try {
+    const res = await fetch(`${API}/api/monitor/start`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        url: s.streamUrl,
+        metadataUrl: s.metadataUrl || null,
+        stationName: s.name,
+        pollInterval: s.pollInterval,
+        stallThreshold: s.stallThreshold,
+        triggerMode: s.triggerMode,
+        triggerKeywords: s.triggerKeywords || '',
+      })
+    });
+    const data = await res.json();
+    if (data.error) return toast(data.error, 'error');
+    toast(s.name + ' started', 'success');
+    refreshStatus();
+  } catch(e) { toast('Could not connect', 'error'); }
+}
+
+// ── Manual monitor ────────────────────────────────────────────────────────────
 
 async function startMonitor() {
   const url = document.getElementById('streamUrl').value.trim();
   if (!url) return toast('Stream URL is required', 'error');
-  const metadataUrl = document.getElementById('metadataUrl').value.trim() || null;
-  const stationName = document.getElementById('stationName').value.trim() || '';
-  const pollInterval = parseInt(document.getElementById('pollInterval').value) || 10;
-  const stallThreshold = parseInt(document.getElementById('stallThreshold').value) || 60;
-  const triggerMode = document.getElementById('triggerMode').value;
-  const triggerKeywords = document.getElementById('triggerKeywords').value.trim() || '';
+  const body = {
+    url,
+    metadataUrl: document.getElementById('metadataUrl').value.trim() || null,
+    stationName: document.getElementById('stationName').value.trim() || '',
+    pollInterval: parseInt(document.getElementById('pollInterval').value) || 10,
+    stallThreshold: parseInt(document.getElementById('stallThreshold').value) || 60,
+    triggerMode: document.getElementById('triggerMode').value,
+    triggerKeywords: document.getElementById('triggerKeywords').value.trim() || '',
+  };
   try {
-    const res = await fetch(`${API}/api/monitor/start`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, metadataUrl, pollInterval, stallThreshold, stationName, triggerMode, triggerKeywords })
-    });
+    const res = await fetch(`${API}/api/monitor/start`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
     const data = await res.json();
     if (data.error) return toast(data.error, 'error');
     toast('Monitoring started', 'success');
-    document.getElementById('streamUrl').value = '';
-    document.getElementById('metadataUrl').value = '';
-    document.getElementById('stationName').value = '';
-    document.getElementById('stationSelect').value = '';
+    ['streamUrl','metadataUrl','stationName','triggerKeywords'].forEach(id => document.getElementById(id).value = '');
     refreshStatus();
-    switchTab('monitor');
   } catch(e) { toast('Could not connect', 'error'); }
 }
 
 async function stopMonitor(id) {
-  await fetch(`${API}/api/monitor/stop/${id}`, { method: 'POST' });
+  await fetch(`${API}/api/monitor/stop/${id}`, {method:'POST'});
   toast('Monitor stopped');
   refreshStatus();
   setTimeout(loadRecordings, 1200);
 }
 
 async function stopAll() {
-  await fetch(`${API}/api/monitor/stopall`, { method: 'POST' });
+  await fetch(`${API}/api/monitor/stopall`, {method:'POST'});
   toast('All monitors stopped');
   refreshStatus();
 }
+
+// ── Recordings ────────────────────────────────────────────────────────────────
 
 function togglePlay(name, safeId) {
   const player = document.getElementById(safeId);
@@ -500,8 +541,7 @@ function togglePlay(name, safeId) {
   const audio = player.querySelector('audio');
   document.querySelectorAll('.audio-player.visible').forEach(p => {
     if (p.id !== safeId) {
-      p.querySelector('audio').pause();
-      p.classList.remove('visible');
+      p.querySelector('audio').pause(); p.classList.remove('visible');
       const b = document.getElementById('btn_' + p.id);
       if (b) { b.innerHTML = '▶ PLAY'; b.classList.remove('playing'); }
     }
@@ -527,10 +567,43 @@ function downloadRec(name) {
 }
 
 async function deleteRec(name) {
-  if (!confirm(`Delete ${name}?`)) return;
-  await fetch(`${API}/api/recordings/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  if (!confirm('Delete ' + name + '?')) return;
+  await fetch(`${API}/api/recordings/${encodeURIComponent(name)}`, {method:'DELETE'});
   toast('Deleted'); loadRecordings();
 }
+
+async function loadRecordings() {
+  try {
+    const res = await fetch(`${API}/api/recordings`);
+    const files = await res.json();
+    const list = document.getElementById('recList');
+    if (!files.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>'; return; }
+    list.innerHTML = files.map(f => {
+      const safeId = 'player_' + f.name.replace(/[^a-zA-Z0-9]/g,'_');
+      const stationSlug = f.name.split('-')[0];
+      const logoUrl = logos[stationSlug];
+      const iconHtml = logoUrl ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:contain;padding:3px">` : '<span style="font-size:16px">📢</span>';
+      return `
+        <div class="rec-item">
+          <div class="rec-icon">${iconHtml}</div>
+          <div class="rec-info">
+            <div class="rec-name">${f.name}</div>
+            <div class="rec-meta">${fmtSize(f.size)} · ${timeAgo(f.modified)}</div>
+          </div>
+          <div class="rec-actions">
+            <button class="btn btn-play" id="btn_${safeId}" onclick="togglePlay('${f.name}','${safeId}')">▶ PLAY</button>
+            <button class="btn btn-download" onclick="downloadRec('${f.name}')">⬇ DOWNLOAD</button>
+            <button class="btn btn-delete" onclick="deleteRec('${f.name}')">DELETE</button>
+          </div>
+          <div class="audio-player" id="${safeId}">
+            <audio controls src="${API}/api/recordings/download/${encodeURIComponent(f.name)}" onended="onAudioEnded('${safeId}')"></audio>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// ── Status polling ────────────────────────────────────────────────────────────
 
 let prevStates = {};
 
@@ -542,33 +615,22 @@ async function refreshStatus() {
     const list = document.getElementById('monitorList');
     if (!active.length) { card.style.display = 'none'; return; }
     card.style.display = 'block';
-
     active.forEach(m => {
       if (prevStates[m.id] === 'recording' && m.status === 'listening') setTimeout(loadRecordings, 1500);
       prevStates[m.id] = m.status;
     });
-
     list.innerHTML = active.map(m => {
       const staleSeconds = Math.floor((Date.now() - m.lastTitleChange) / 1000);
       const stallPct = Math.min(100, (staleSeconds / m.options.stallThreshold) * 100);
       const stallColor = stallPct > 80 ? 'var(--red)' : stallPct > 50 ? 'var(--amber)' : 'var(--green)';
-
       const albumArtHtml = m.currentAlbumart
-        ? `<img src="${m.currentAlbumart.startsWith('//') ? 'https:' + m.currentAlbumart : m.currentAlbumart}"
-             style="width:52px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)"
-             onerror="this.style.display='none'">`
+        ? `<img src="${m.currentAlbumart.startsWith('//') ? 'https:' + m.currentAlbumart : m.currentAlbumart}" style="width:52px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)" onerror="this.style.display='none'">`
         : '';
-
-      const sourceLabel = m.metadataSource === 'json'
-        ? '🔗 JSON API — ' + m.options.metadataUrl
-        : '📡 ICY stream metadata';
-
+      const artCols = albumArtHtml ? 'auto 1fr 1fr' : '1fr 1fr';
       const triggerLabel = m.options.triggerMode === 'keyword'
-        ? '🔑 Blank/keyword' + (m.options.triggerKeywords ? ' — ' + m.options.triggerKeywords : ' — triggers on empty title')
-        : '⏱ Stall threshold — ' + m.options.stallThreshold + 's';
-
-      const stationLogoEl = stationLogoHtml(m.options.stationName, 36);
-
+        ? '🔑 Blank/keyword' + (m.options.triggerKeywords ? ' — ' + m.options.triggerKeywords : ' — empty title')
+        : '⏱ Stall — ' + m.options.stallThreshold + 's';
+      const sourceLabel = m.metadataSource === 'json' ? '🔗 JSON API — ' + m.options.metadataUrl : '📡 ICY stream';
       const historyHtml = m.titleHistory.length ? `
         <div class="title-history">
           <div class="history-label">Recent titles</div>
@@ -576,20 +638,15 @@ async function refreshStatus() {
             ${m.titleHistory.map(h => `
               <div class="history-item">
                 <span class="history-time">${fmtTime(h.time)}</span>
-                <span class="history-title">${h.artist && h.songTitle
-                  ? '<strong>' + h.artist + '</strong> — ' + h.songTitle
-                  : (h.title || '<em>no title</em>')}</span>
+                <span class="history-title">${h.artist && h.songTitle ? '<strong>' + h.artist + '</strong> — ' + h.songTitle : (h.title || '<em>no title</em>')}</span>
               </div>`).join('')}
           </div>
         </div>` : '';
-
-      const artCols = albumArtHtml ? 'auto 1fr 1fr' : '1fr 1fr';
-
       return `
         <div class="monitor-card ${stateClass(m)}">
           <div class="monitor-top">
             <div class="status-dot"></div>
-            ${stationLogoEl}
+            ${stationLogoHtml(m.options.stationName, 36)}
             <div class="monitor-info">
               <div class="monitor-url">${m.options.stationName ? '<strong>' + m.options.stationName + '</strong> — ' : ''}${m.url}</div>
               <div class="monitor-status-line">${stateLabel(m)}</div>
@@ -606,15 +663,11 @@ async function refreshStatus() {
             </div>
             <div class="meta-item">
               <div class="meta-key">Title unchanged for</div>
-              <div class="meta-val" style="color:${stallColor}">${staleFor(m.lastTitleChange)}${m.status === 'recording' ? ' — recording' : ''}</div>
+              <div class="meta-val" style="color:${stallColor}">${staleFor(m.lastTitleChange)}${m.status==='recording' ? ' — recording' : ''}</div>
             </div>
             <div class="meta-item" style="grid-column:1/-1">
-              <div class="meta-key">Metadata source</div>
-              <div class="meta-val" style="font-size:11px;white-space:normal">${sourceLabel}</div>
-            </div>
-            <div class="meta-item" style="grid-column:1/-1">
-              <div class="meta-key">Trigger mode</div>
-              <div class="meta-val" style="font-size:11px">${triggerLabel}</div>
+              <div class="meta-key">Source / trigger</div>
+              <div class="meta-val" style="font-size:11px;white-space:normal">${sourceLabel} &nbsp;·&nbsp; ${triggerLabel}</div>
             </div>
           </div>
           ${historyHtml}
@@ -623,76 +676,49 @@ async function refreshStatus() {
   } catch(e) {}
 }
 
-async function loadRecordings() {
-  try {
-    const res = await fetch(`${API}/api/recordings`);
-    const files = await res.json();
-    const list = document.getElementById('recList');
-    if (!files.length) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>';
-      return;
-    }
-    list.innerHTML = files.map(f => {
-      const safeId = 'player_' + f.name.replace(/[^a-zA-Z0-9]/g, '_');
-      const stationSlug = f.name.split('-')[0];
-      const logoUrl = logos[stationSlug];
-      const iconHtml = logoUrl
-        ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:contain;padding:3px">`
-        : '<span>📢</span>';
-      return `
-        <div class="rec-item">
-          <div class="rec-icon">${iconHtml}</div>
-          <div class="rec-info">
-            <div class="rec-name">${f.name}</div>
-            <div class="rec-meta">${fmtSize(f.size)} &nbsp;·&nbsp; ${timeAgo(f.modified)}</div>
-          </div>
-          <div class="rec-actions">
-            <button class="btn btn-play" id="btn_${safeId}" onclick="togglePlay('${f.name}','${safeId}')">▶ PLAY</button>
-            <button class="btn btn-download" onclick="downloadRec('${f.name}')">⬇ DOWNLOAD</button>
-            <button class="btn btn-delete" onclick="deleteRec('${f.name}')">DELETE</button>
-          </div>
-          <div class="audio-player" id="${safeId}">
-            <audio controls src="${API}/api/recordings/download/${encodeURIComponent(f.name)}" onended="onAudioEnded('${safeId}')"></audio>
-          </div>
-        </div>`;
-    }).join('');
-  } catch(e) {}
-}
+// ── Station management ────────────────────────────────────────────────────────
 
 async function loadStations() {
   try {
-    const res = await fetch(`${API}/api/logos`);
-    const data = await res.json();
+    const [stRes, lgRes] = await Promise.all([
+      fetch(`${API}/api/stations`),
+      fetch(`${API}/api/logos`),
+    ]);
+    savedStations = await stRes.json();
+    const lgData = await lgRes.json();
     logos = {};
-    data.forEach(s => { logos[s.station] = s.url; });
-    renderStationGrid(data);
-    updateStationSelect(data);
+    lgData.forEach(s => { logos[s.station] = s.url; });
+    renderStationGrid();
+    renderQuickLaunch();
   } catch(e) {}
 }
 
-function renderStationGrid(data) {
+function renderStationGrid() {
   const grid = document.getElementById('stationGrid');
-  if (!data.length) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:20px">No stations yet</div>';
+  if (!savedStations.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:20px">No stations saved yet</div>';
     return;
   }
-  grid.innerHTML = data.map(s => `
-    <div class="station-card">
-      <button class="station-card-del" onclick="deleteLogo('${s.station}')" title="Remove">×</button>
-      <img src="${s.url}" class="station-card-logo" onerror="this.style.display='none'">
-      <div class="station-card-name">${s.station}</div>
-    </div>`).join('');
+  grid.innerHTML = savedStations.map(s => {
+    const logoUrl = getLogoUrl(s.name);
+    const logoEl = logoUrl
+      ? `<img src="${logoUrl}" class="station-card-logo" alt="${s.name}">`
+      : `<div class="station-card-placeholder">${s.name.substring(0,4)}</div>`;
+    const sub = s.triggerMode === 'keyword' ? 'Blank/keyword' : 'Stall ' + s.stallThreshold + 's';
+    return `
+      <div class="station-card">
+        ${logoEl}
+        <div class="station-card-name">${s.name}</div>
+        <div class="station-card-meta">${sub} · poll ${s.pollInterval}s</div>
+        <div class="station-card-actions">
+          <button class="station-card-edit" onclick="editStation(${JSON.stringify(s.name).replace(/"/g,'&quot;')})">EDIT</button>
+          <button class="btn btn-delete station-card-del" onclick="deleteStation(${JSON.stringify(s.name).replace(/"/g,'&quot;')})">DEL</button>
+        </div>
+      </div>`;
+  }).join('');
 }
 
-function updateStationSelect(data) {
-  const sel = document.getElementById('stationSelect');
-  const current = sel.value;
-  sel.innerHTML = '<option value="">— select or type —</option>' +
-    data.map(s => `<option value="${s.station}">${s.station}</option>`).join('');
-  sel.value = current;
-}
-
-function uploadLogo() {
+function previewLogo() {
   const file = document.getElementById('logoFile').files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -705,33 +731,86 @@ function uploadLogo() {
 
 async function saveStation() {
   const name = document.getElementById('newStationName').value.trim();
-  const file = document.getElementById('logoFile').files[0];
+  const streamUrl = document.getElementById('newStreamUrl').value.trim();
   if (!name) return toast('Station name is required', 'error');
-  if (!file) return toast('Please select a logo image', 'error');
+  if (!streamUrl) return toast('Stream URL is required', 'error');
 
-  const formData = new FormData();
-  formData.append('logo', file);
+  const stationData = {
+    name,
+    streamUrl,
+    metadataUrl: document.getElementById('newMetadataUrl').value.trim() || '',
+    pollInterval: parseInt(document.getElementById('newPollInterval').value) || 10,
+    stallThreshold: parseInt(document.getElementById('newStallThreshold').value) || 60,
+    triggerMode: document.getElementById('newTriggerMode').value,
+    triggerKeywords: document.getElementById('newTriggerKeywords').value.trim() || '',
+  };
 
   try {
-    const res = await fetch(`${API}/api/logos/${encodeURIComponent(name)}`, { method: 'POST', body: formData });
+    // Save station config
+    const res = await fetch(`${API}/api/stations`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(stationData)
+    });
     const data = await res.json();
     if (data.error) return toast(data.error, 'error');
+
+    // Upload logo if selected
+    const file = document.getElementById('logoFile').files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('logo', file);
+      await fetch(`${API}/api/logos/${encodeURIComponent(name)}`, {method:'POST', body:formData});
+    }
+
     toast('Station saved', 'success');
-    document.getElementById('newStationName').value = '';
-    document.getElementById('logoFile').value = '';
-    document.getElementById('uploadPreview').style.display = 'none';
+    clearStationForm();
     loadStations();
-  } catch(e) { toast('Upload failed', 'error'); }
+  } catch(e) { toast('Save failed', 'error'); }
 }
 
-async function deleteLogo(station) {
-  if (!confirm(`Remove ${station}?`)) return;
-  await fetch(`${API}/api/logos/${encodeURIComponent(station)}`, { method: 'DELETE' });
-  toast('Removed');
+function editStation(name) {
+  const s = savedStations.find(x => x.name === name);
+  if (!s) return;
+  document.getElementById('newStationName').value = s.name;
+  document.getElementById('newStreamUrl').value = s.streamUrl;
+  document.getElementById('newMetadataUrl').value = s.metadataUrl || '';
+  document.getElementById('newPollInterval').value = s.pollInterval;
+  document.getElementById('newStallThreshold').value = s.stallThreshold;
+  document.getElementById('newTriggerMode').value = s.triggerMode;
+  document.getElementById('newTriggerKeywords').value = s.triggerKeywords || '';
+  document.getElementById('editingStation').value = name;
+  document.getElementById('stationFormLabel').textContent = 'Edit Station — ' + name;
+  document.getElementById('cancelEditBtn').style.display = '';
+  toggleNewTriggerMode();
+  document.getElementById('newStationName').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function cancelEdit() {
+  clearStationForm();
+}
+
+function clearStationForm() {
+  ['newStationName','newStreamUrl','newMetadataUrl','newTriggerKeywords'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newPollInterval').value = 10;
+  document.getElementById('newStallThreshold').value = 60;
+  document.getElementById('newTriggerMode').value = 'stall';
+  document.getElementById('logoFile').value = '';
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('editingStation').value = '';
+  document.getElementById('stationFormLabel').textContent = 'Add Station';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  toggleNewTriggerMode();
+}
+
+async function deleteStation(name) {
+  if (!confirm('Delete ' + name + '?')) return;
+  await fetch(`${API}/api/stations/${encodeURIComponent(name)}`, {method:'DELETE'});
+  toast('Deleted');
   loadStations();
 }
 
-// Restore theme
+// ── Init ──────────────────────────────────────────────────────────────────────
+
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
 document.getElementById('themeLabel').textContent = savedTheme.toUpperCase();
