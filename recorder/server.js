@@ -3,6 +3,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const multer = require('multer');
 const http = require('http');
 const https = require('https');
 
@@ -11,7 +12,20 @@ app.use(cors());
 app.use(express.json());
 
 const RECORDINGS_DIR = '/recordings';
+const LOGOS_DIR = '/recordings/logos';
 let monitors = {};
+
+// Ensure logos dir exists
+if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, LOGOS_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.png';
+    cb(null, req.params.station.replace(/[^a-zA-Z0-9_-]/g, '_') + ext);
+  }
+});
+const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
 
 function ts() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -219,8 +233,26 @@ function startMonitor(id, url, options = {}) {
         if (state.titleHistory.length > 20) state.titleHistory.pop();
       }
 
-      const stalled = (now - state.lastTitleChange) > (stallThreshold * 1000);
-      const isAd = !isMusic || stalled;
+      // Determine if currently in an ad break based on trigger mode
+      let isAd = false;
+      if (state.options.triggerMode === 'keyword') {
+        const keywords = state.options.triggerKeywords
+          .split(',')
+          .map(k => k.trim().toLowerCase())
+          .filter(k => k.length > 0);
+        const t = (title || '').toLowerCase();
+        const isBlank = !title || title.trim() === '';
+        if (keywords.length === 0) {
+          // No keywords = trigger only on blank title
+          isAd = isBlank;
+        } else {
+          isAd = isBlank || keywords.some(k => t.includes(k));
+        }
+      } else {
+        // Stall mode
+        const stalled = (now - state.lastTitleChange) > (stallThreshold * 1000);
+        isAd = !isMusic || stalled;
+      }
 
       if (isAd && state.status === 'listening') {
         beginRecording(state);
@@ -342,6 +374,38 @@ app.delete('/api/recordings/:name', (req, res) => {
   const filePath = path.join(RECORDINGS_DIR, req.params.name);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
   fs.unlinkSync(filePath);
+  res.json({ message: 'Deleted' });
+});
+
+// Upload station logo
+app.post('/api/logos/:station', upload.single('logo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ filename: req.file.filename, url: '/api/logos/img/' + req.file.filename });
+});
+
+// Serve logo image
+app.get('/api/logos/img/:filename', (req, res) => {
+  const filePath = path.join(LOGOS_DIR, req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(filePath);
+});
+
+// List all logos
+app.get('/api/logos', (req, res) => {
+  try {
+    const files = fs.existsSync(LOGOS_DIR)
+      ? fs.readdirSync(LOGOS_DIR).filter(f => /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(f))
+      : [];
+    res.json(files.map(f => ({ station: f.replace(/\.[^.]+$/, ''), filename: f, url: '/api/logos/img/' + f })));
+  } catch(e) { res.json([]); }
+});
+
+// Delete logo
+app.delete('/api/logos/:station', (req, res) => {
+  const files = fs.existsSync(LOGOS_DIR) ? fs.readdirSync(LOGOS_DIR) : [];
+  const match = files.find(f => f.startsWith(req.params.station + '.') || f === req.params.station);
+  if (!match) return res.status(404).json({ error: 'Not found' });
+  fs.unlinkSync(path.join(LOGOS_DIR, match));
   res.json({ message: 'Deleted' });
 });
 

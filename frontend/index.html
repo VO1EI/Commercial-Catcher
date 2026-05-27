@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,46 +25,88 @@
     --blue: #1d4ed8;
     --blue-bg: #eff6ff;
     --blue-border: #bfdbfe;
+    --toggle-bg: #e4e4dc;
+  }
+
+  [data-theme="dark"] {
+    --bg: #111111;
+    --surface: #1a1a1a;
+    --surface2: #222222;
+    --border: #333333;
+    --text: #f0f0f0;
+    --muted: #777;
+    --green: #4ade80;
+    --green-bg: #052e16;
+    --green-border: #166534;
+    --red: #f87171;
+    --red-bg: #2d0f0f;
+    --red-border: #7f1d1d;
+    --amber: #fbbf24;
+    --amber-bg: #1c0f00;
+    --amber-border: #78350f;
+    --blue: #60a5fa;
+    --blue-bg: #0f1c3a;
+    --blue-border: #1e3a5f;
+    --toggle-bg: #333333;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; transition: background 0.2s, color 0.2s; }
 
   .header {
     background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 18px 40px; display: flex; align-items: center; gap: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 16px 40px; display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04); position: sticky; top: 0; z-index: 10;
   }
-  .logo { width: 32px; height: 32px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .logo-mark { width: 32px; height: 32px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
   h1 { font-family: 'Space Mono', monospace; font-size: 15px; letter-spacing: -0.3px; }
   .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-  .main { max-width: 860px; margin: 0 auto; padding: 32px 40px; }
+  /* Dark mode toggle */
+  .theme-toggle {
+    width: 44px; height: 24px; background: var(--toggle-bg); border-radius: 12px;
+    border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .theme-toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--surface); transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  [data-theme="dark"] .theme-toggle::after { transform: translateX(20px); }
+  [data-theme="dark"] .theme-toggle { background: var(--green); }
+  .theme-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  .main { max-width: 880px; margin: 0 auto; padding: 32px 40px; }
+
+  .tabs { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 24px; width: fit-content; }
+  .tab { padding: 7px 18px; border-radius: 7px; border: none; background: transparent; color: var(--muted); cursor: pointer; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.15s; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
   .card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; padding: 24px 28px; margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-
-  .card-label {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 18px;
-  }
+  .card-label { font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 18px; }
 
   .input-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
   .input-wrap { flex: 1; }
 
   label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px; }
 
-  input[type=text], input[type=number] {
+  input[type=text], input[type=number], select {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
     font-size: 14px; padding: 10px 14px; outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,107,60,0.1); }
-  input::placeholder { color: #ccc; }
+  input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(26,107,60,0.1); }
+  input::placeholder { color: var(--muted); opacity: 0.5; }
+  select option { background: var(--surface2); color: var(--text); }
 
   .tuning-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .tuning-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
@@ -76,7 +118,7 @@
     letter-spacing: 0.5px; transition: all 0.15s; white-space: nowrap;
   }
   .btn-start { background: var(--green); color: #fff; padding: 10px 22px; }
-  .btn-start:hover { background: #155c33; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,107,60,0.25); }
+  .btn-start:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn-stop { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); padding: 7px 14px; font-size: 10px; }
   .btn-stop:hover { background: var(--red); color: #fff; }
   .btn-play { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); padding: 7px 14px; font-size: 10px; }
@@ -87,26 +129,25 @@
   .btn-delete:hover { background: var(--red); color: #fff; }
   .btn-sm { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); padding: 5px 12px; font-size: 10px; }
   .btn-sm:hover { border-color: var(--green); color: var(--green); }
+  .btn-upload { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; font-size: 11px; cursor: pointer; }
+  .btn-upload:hover { border-color: var(--green); color: var(--green); }
 
   /* Monitor cards */
   .monitor-list { display: flex; flex-direction: column; gap: 14px; }
-
-  .monitor-card {
-    border-radius: 10px; border: 1px solid var(--border);
-    padding: 16px 18px; transition: border-color 0.3s, background 0.3s;
-  }
+  .monitor-card { border-radius: 10px; border: 1px solid var(--border); padding: 16px 18px; transition: border-color 0.3s, background 0.3s; }
   .monitor-card.state-listening { background: var(--green-bg); border-color: var(--green-border); }
   .monitor-card.state-recording { background: var(--red-bg); border-color: var(--red-border); }
   .monitor-card.state-starting { background: var(--amber-bg); border-color: var(--amber-border); }
 
   .monitor-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-
   .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .state-listening .status-dot { background: var(--green); }
   .state-recording .status-dot { background: var(--red); animation: blink 0.8s ease-in-out infinite; }
   .state-starting .status-dot { background: var(--amber); animation: blink 1.2s ease-in-out infinite; }
-
   @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
+
+  .station-logo { width: 36px; height: 36px; border-radius: 6px; object-fit: contain; flex-shrink: 0; border: 1px solid var(--border); background: var(--surface); padding: 2px; }
+  .station-logo-placeholder { width: 36px; height: 36px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); flex-shrink: 0; text-align: center; line-height: 1.2; padding: 2px; }
 
   .monitor-info { flex: 1; min-width: 0; }
   .monitor-url { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -114,20 +155,14 @@
   .state-listening .monitor-status-line { color: var(--green); }
   .state-recording .monitor-status-line { color: var(--red); }
   .state-starting .monitor-status-line { color: var(--amber); }
-
   .monitor-elapsed { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; margin-right: 4px; }
 
-  /* Metadata panel */
-  .meta-panel {
-    background: rgba(255,255,255,0.6);
-    border-radius: 8px; padding: 12px 14px;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  }
+  .meta-panel { background: rgba(255,255,255,0.25); border-radius: 8px; padding: 12px 14px; display: grid; gap: 10px; }
+  [data-theme="dark"] .meta-panel { background: rgba(0,0,0,0.2); }
   .meta-item { min-width: 0; }
   .meta-key { font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 3px; }
   .meta-val { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Title history */
   .title-history { margin-top: 10px; }
   .history-label { font-family: 'Space Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
   .history-list { display: flex; flex-direction: column; gap: 3px; }
@@ -137,30 +172,43 @@
 
   /* Recordings */
   .rec-list { display: flex; flex-direction: column; gap: 8px; }
-  .rec-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; transition: box-shadow 0.2s; }
-  .rec-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-  .rec-icon { width: 34px; height: 34px; background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .rec-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .rec-icon { width: 34px; height: 34px; background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+  .rec-icon img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+  .rec-icon span { font-size: 16px; }
   .rec-info { flex: 1; min-width: 0; }
   .rec-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rec-meta { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
   .rec-actions { display: flex; gap: 6px; flex-shrink: 0; }
-
   .audio-player { width: 100%; display: none; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
   .audio-player.visible { display: block; }
   .audio-player audio { width: 100%; height: 36px; outline: none; }
+
+  /* Station manager */
+  .station-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .station-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
+  .station-card-logo { width: 56px; height: 56px; border-radius: 8px; object-fit: contain; border: 1px solid var(--border); background: var(--surface); padding: 4px; }
+  .station-card-placeholder { width: 56px; height: 56px; border-radius: 8px; background: var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+  .station-card-name { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; }
+  .station-card-del { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .station-card-del:hover { background: var(--red); color: #fff; }
+
+  .upload-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+  .upload-zone:hover { border-color: var(--green); }
+  .upload-zone input { display: none; }
+  .upload-zone-text { font-size: 13px; color: var(--muted); margin-top: 8px; }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 
   .empty { text-align: center; padding: 40px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; }
   .empty-icon { font-size: 30px; margin-bottom: 10px; opacity: 0.35; }
 
-  .info-banner { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #1e40af; margin-bottom: 20px; display: flex; gap: 10px; line-height: 1.6; }
-  .info-banner span { flex-shrink: 0; font-size: 16px; }
+  .info-banner { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--blue); margin-bottom: 20px; display: flex; gap: 10px; line-height: 1.6; }
 
-  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; z-index: 100; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 4px 16px rgba(0,0,0,0.15); background: var(--text); color: #fff; }
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 8px; font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; z-index: 100; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); background: var(--text); color: var(--surface); }
   .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.error { background: var(--red); }
-  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); color: #fff; }
+  .toast.success { background: var(--green); color: #fff; }
 
   details summary { cursor: pointer; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; user-select: none; }
   details summary:hover { color: var(--green); }
@@ -169,99 +217,145 @@
   @media (max-width: 620px) {
     .header, .main { padding-left: 16px; padding-right: 16px; }
     .tuning-row { grid-template-columns: 1fr; }
-    .meta-panel { grid-template-columns: 1fr; }
     .rec-actions { flex-wrap: wrap; }
+    .input-row { flex-direction: column; }
   }
 </style>
 </head>
 <body>
 
 <header class="header">
-  <div class="logo">📻</div>
+  <div class="logo-mark">📻</div>
   <div>
     <h1>Ad Recorder</h1>
     <div class="header-sub">Watches stream metadata — records when music stops</div>
+  </div>
+  <div class="header-right">
+    <span class="theme-label" id="themeLabel">LIGHT</span>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"></button>
   </div>
 </header>
 
 <main class="main">
 
-  <div class="info-banner">
-    <span>ℹ️</span>
-    <div>Monitors the song title embedded in a Shoutcast or Icecast stream. When the title disappears, stops updating, or matches known ad patterns, recording starts automatically. When a new song title appears, recording stops and the file is saved. Works best with standard internet radio streams.</div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('monitor')">MONITOR</button>
+    <button class="tab" onclick="switchTab('recordings')">RECORDINGS</button>
+    <button class="tab" onclick="switchTab('stations')">STATIONS</button>
   </div>
 
-  <div class="card">
-    <div class="card-label">Monitor a Stream</div>
-    <div class="input-row">
-      <div class="input-wrap">
-        <label>Stream URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(audio)</span></label>
-        <input type="text" id="streamUrl" placeholder="URL" />
-      </div>
-      <div style="width:200px">
-        <label>Station Name</label>
-        <input type="text" id="stationName" placeholder="Name" />
-      </div>
-      <button class="btn btn-start" onclick="startMonitor()">▶ &nbsp;START</button>
+  <!-- MONITOR TAB -->
+  <div class="tab-panel active" id="tab-monitor">
+
+    <div class="info-banner">
+      <span>ℹ️</span>
+      <div>Monitors stream metadata and records automatically when the title disappears or matches ad keywords. Music resumes → recording stops.</div>
     </div>
-    <div style="margin-bottom:16px">
-      <label>
-        Metadata URL
-        <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">
-          — optional, if song titles come from a different URL than the audio stream
-        </span>
-      </label>
-      <input type="text" id="metadataUrl" placeholder="Metadata URL" />
-    </div>
-    <details>
-      <summary>⚙ Tuning (optional)</summary>
-      <div class="tuning-row" style="margin-bottom:14px">
-        <div>
-          <label>Poll interval (seconds)</label>
-          <input type="number" id="pollInterval" value="10" min="3" step="1" />
-          <div class="tuning-hint">How often to check the title. Default 10s</div>
+
+    <div class="card">
+      <div class="card-label">New Monitor</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <label>Stream URL</label>
+          <input type="text" id="streamUrl" placeholder="URL" />
         </div>
-        <div>
-          <label>Trigger mode</label>
-          <select id="triggerMode" onchange="toggleTriggerMode()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;outline:none">
-            <option value="stall">Stall threshold — title unchanged too long</option>
-            <option value="keyword">Blank / keyword — title is empty or matches</option>
+        <div style="width:180px">
+          <label>Station Name</label>
+          <select id="stationSelect" onchange="onStationSelect()">
+            <option value="">— select or type —</option>
           </select>
-          <div class="tuning-hint">How to detect ad breaks</div>
         </div>
-      </div>
-      <div id="stallOptions" class="tuning-row">
-        <div>
-          <label>Stall threshold (seconds)</label>
-          <input type="number" id="stallThreshold" value="60" min="10" step="5" />
-          <div class="tuning-hint">Title unchanged this long = ad break. Default 60s</div>
+        <div style="width:140px">
+          <label>Custom name</label>
+          <input type="text" id="stationName" placeholder="Name" />
         </div>
+        <button class="btn btn-start" onclick="startMonitor()">▶ START</button>
       </div>
-      <div id="keywordOptions" class="tuning-row" style="display:none">
-        <div style="grid-column:1/-1">
-          <label>Trigger keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— comma separated, leave blank to trigger on empty title only</span></label>
-          <input type="text" id="triggerKeywords" placeholder="e.g. advertisement, sponsor  (blank = trigger when title disappears)" />
-          <div class="tuning-hint">Recording starts when title is blank OR matches any keyword</div>
+      <div style="margin-bottom:16px">
+        <label>Metadata URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— optional JSON endpoint</span></label>
+        <input type="text" id="metadataUrl" placeholder="Metadata URL" />
+      </div>
+      <details>
+        <summary>⚙ Tuning (optional)</summary>
+        <div class="tuning-row" style="margin-bottom:14px">
+          <div>
+            <label>Poll interval (seconds)</label>
+            <input type="number" id="pollInterval" value="10" min="3" step="1" />
+            <div class="tuning-hint">How often to check. Default 10s</div>
+          </div>
+          <div>
+            <label>Trigger mode</label>
+            <select id="triggerMode" onchange="toggleTriggerMode()">
+              <option value="stall">Stall threshold</option>
+              <option value="keyword">Blank / keyword</option>
+            </select>
+          </div>
         </div>
+        <div id="stallOptions" class="tuning-row">
+          <div>
+            <label>Stall threshold (seconds)</label>
+            <input type="number" id="stallThreshold" value="60" min="10" step="5" />
+            <div class="tuning-hint">Title unchanged this long = ad. Default 60s</div>
+          </div>
+        </div>
+        <div id="keywordOptions" class="tuning-row" style="display:none">
+          <div style="grid-column:1/-1">
+            <label>Keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">— comma separated, blank = trigger on empty title</span></label>
+            <input type="text" id="triggerKeywords" placeholder="Metadata URL" />
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card" id="monitorsCard" style="display:none">
+      <div class="section-header">
+        <div class="card-label" style="margin:0">Active Monitors</div>
+        <button class="btn btn-sm" onclick="stopAll()">STOP ALL</button>
       </div>
-    </details>
+      <div class="monitor-list" id="monitorList"></div>
+    </div>
+
   </div>
 
-  <div class="card" id="monitorsCard" style="display:none">
-    <div class="section-header">
-      <div class="card-label" style="margin:0">Active Monitors</div>
-      <button class="btn btn-sm" onclick="stopAll()">STOP ALL</button>
+  <!-- RECORDINGS TAB -->
+  <div class="tab-panel" id="tab-recordings">
+    <div class="card">
+      <div class="section-header">
+        <div class="card-label" style="margin:0">Captured Commercials</div>
+        <button class="btn btn-sm" onclick="loadRecordings()">↻ REFRESH</button>
+      </div>
+      <div class="rec-list" id="recList">
+        <div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>
+      </div>
     </div>
-    <div class="monitor-list" id="monitorList"></div>
   </div>
 
-  <div class="card">
-    <div class="section-header">
-      <div class="card-label" style="margin:0">Captured Commercials</div>
-      <button class="btn btn-sm" onclick="loadRecordings()">↻ &nbsp;REFRESH</button>
-    </div>
-    <div class="rec-list" id="recList">
-      <div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>
+  <!-- STATIONS TAB -->
+  <div class="tab-panel" id="tab-stations">
+    <div class="card">
+      <div class="card-label">Station Logos</div>
+      <div class="station-grid" id="stationGrid">
+        <div class="empty" style="grid-column:1/-1;padding:20px">No stations yet</div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px">
+        <div class="card-label">Add Station</div>
+        <div class="input-row" style="margin-bottom:12px">
+          <div class="input-wrap">
+            <label>Station Name</label>
+            <input type="text" id="newStationName" placeholder="Name" />
+          </div>
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('logoFile').click()">
+          <input type="file" id="logoFile" accept="image/*" onchange="uploadLogo()">
+          <div style="font-size:28px;opacity:0.4">🖼</div>
+          <div class="upload-zone-text">Click to upload logo (PNG, JPG, SVG — max 2MB)</div>
+          <div id="uploadPreview" style="margin-top:10px;display:none">
+            <img id="previewImg" style="height:48px;border-radius:6px;border:1px solid var(--border)" />
+          </div>
+        </div>
+        <button class="btn btn-start" style="margin-top:12px;width:100%;justify-content:center" onclick="saveStation()">SAVE STATION</button>
+      </div>
     </div>
   </div>
 
@@ -270,279 +364,381 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = '';
+const API = '';
+let logos = {};
 
-  function toast(msg, type = '') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show' + (type ? ' ' + type : '');
-    setTimeout(() => t.className = 'toast', 3200);
-  }
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.className = 'toast', 3200);
+}
 
-  function fmtSize(b) {
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-    return (b/1048576).toFixed(1) + ' MB';
-  }
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['monitor','recordings','stations'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  if (name === 'recordings') loadRecordings();
+  if (name === 'stations') loadStations();
+}
 
-  function timeAgo(d) {
-    const s = Math.floor((Date.now() - new Date(d)) / 1000);
-    if (s < 60) return s + 's ago';
-    if (s < 3600) return Math.floor(s/60) + 'm ago';
-    if (s < 86400) return Math.floor(s/3600) + 'h ago';
-    return new Date(d).toLocaleDateString();
-  }
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeLabel').textContent = isDark ? 'LIGHT' : 'DARK';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
 
-  function fmtTime(d) {
-    return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  }
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
 
-  function elapsed(start) {
-    const s = Math.floor((Date.now() - new Date(start)) / 1000);
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-    return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':');
-  }
+function timeAgo(d) {
+  const s = Math.floor((Date.now() - new Date(d)) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return new Date(d).toLocaleDateString();
+}
 
-  function staleFor(ts) {
-    const s = Math.floor((Date.now() - ts) / 1000);
-    if (s < 60) return `${s}s`;
-    return `${Math.floor(s/60)}m ${s%60}s`;
-  }
+function fmtTime(d) {
+  return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
-  function stateLabel(m) {
-    if (m.status === 'recording') return `⏺ RECORDING AD — ${elapsed(m.recordingStart)}`;
-    if (m.status === 'listening') {
-      if (m.currentTitle) return `🎵 ${m.currentTitle}`;
-      return '🎵 LISTENING — no title detected';
-    }
-    return 'STARTING...';
-  }
+function elapsed(start) {
+  const s = Math.floor((Date.now() - new Date(start)) / 1000);
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':');
+}
 
-  function stateClass(m) {
-    if (m.status === 'recording') return 'state-recording';
-    if (m.status === 'listening') return 'state-listening';
-    return 'state-starting';
-  }
+function staleFor(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + 's';
+  return Math.floor(s/60) + 'm ' + (s%60) + 's';
+}
 
-  function toggleTriggerMode() {
-    const mode = document.getElementById('triggerMode').value;
-    document.getElementById('stallOptions').style.display = mode === 'stall' ? '' : 'none';
-    document.getElementById('keywordOptions').style.display = mode === 'keyword' ? '' : 'none';
-  }
+function stateLabel(m) {
+  if (m.status === 'recording') return '⏺ RECORDING AD — ' + elapsed(m.recordingStart);
+  if (m.status === 'listening') return m.currentTitle ? '🎵 ' + m.currentTitle : '🎵 LISTENING';
+  return 'STARTING...';
+}
 
-  async function startMonitor() {
-    const url = document.getElementById('streamUrl').value.trim();
-    if (!url) return toast('Stream URL is required', 'error');
-    const metadataUrl = document.getElementById('metadataUrl').value.trim() || null;
-    const stationName = document.getElementById('stationName').value.trim() || '';
-    const triggerMode = document.getElementById('triggerMode').value;
-    const triggerKeywords = document.getElementById('triggerKeywords').value.trim() || '';
-    const pollInterval = parseInt(document.getElementById('pollInterval').value) || 10;
-    const stallThreshold = parseInt(document.getElementById('stallThreshold').value) || 60;
-    try {
-      const res = await fetch(`${API}/api/monitor/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, metadataUrl, pollInterval, stallThreshold, stationName, triggerMode, triggerKeywords })
-      });
-      const data = await res.json();
-      if (data.error) return toast(data.error, 'error');
-      toast('Monitoring started', 'success');
-      document.getElementById('streamUrl').value = '';
-      document.getElementById('metadataUrl').value = '';
-      document.getElementById('stationName').value = '';
-      refreshStatus();
-    } catch(e) {
-      toast('Could not connect to recorder service', 'error');
-    }
-  }
+function stateClass(m) {
+  if (m.status === 'recording') return 'state-recording';
+  if (m.status === 'listening') return 'state-listening';
+  return 'state-starting';
+}
 
-  async function stopMonitor(id) {
-    await fetch(`${API}/api/monitor/stop/${id}`, { method: 'POST' });
-    toast('Monitor stopped');
-    refreshStatus();
-    setTimeout(loadRecordings, 1200);
-  }
+function getLogoUrl(stationName) {
+  if (!stationName) return null;
+  const slug = stationName.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+  return logos[slug] || logos[stationName] || null;
+}
 
-  async function stopAll() {
-    await fetch(`${API}/api/monitor/stopall`, { method: 'POST' });
-    toast('All monitors stopped');
-    refreshStatus();
-  }
+function stationLogoHtml(stationName, size = 36) {
+  const url = getLogoUrl(stationName);
+  if (url) return `<img src="${url}" class="station-logo" style="width:${size}px;height:${size}px" alt="${stationName}">`;
+  if (stationName) return `<div class="station-logo-placeholder" style="width:${size}px;height:${size}px">${stationName.substring(0,4)}</div>`;
+  return '';
+}
 
-  function togglePlay(name, safeId) {
-    const player = document.getElementById(safeId);
-    const btn = document.getElementById('btn_' + safeId);
-    const audio = player.querySelector('audio');
-    document.querySelectorAll('.audio-player.visible').forEach(p => {
-      if (p.id !== safeId) {
-        p.querySelector('audio').pause();
-        p.classList.remove('visible');
-        const b = document.getElementById('btn_' + p.id);
-        if (b) { b.innerHTML = '▶ PLAY'; b.classList.remove('playing'); }
-      }
+function toggleTriggerMode() {
+  const mode = document.getElementById('triggerMode').value;
+  document.getElementById('stallOptions').style.display = mode === 'stall' ? '' : 'none';
+  document.getElementById('keywordOptions').style.display = mode === 'keyword' ? '' : 'none';
+}
+
+function onStationSelect() {
+  const val = document.getElementById('stationSelect').value;
+  if (val) document.getElementById('stationName').value = val;
+}
+
+async function startMonitor() {
+  const url = document.getElementById('streamUrl').value.trim();
+  if (!url) return toast('Stream URL is required', 'error');
+  const metadataUrl = document.getElementById('metadataUrl').value.trim() || null;
+  const stationName = document.getElementById('stationName').value.trim() || '';
+  const pollInterval = parseInt(document.getElementById('pollInterval').value) || 10;
+  const stallThreshold = parseInt(document.getElementById('stallThreshold').value) || 60;
+  const triggerMode = document.getElementById('triggerMode').value;
+  const triggerKeywords = document.getElementById('triggerKeywords').value.trim() || '';
+  try {
+    const res = await fetch(`${API}/api/monitor/start`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, metadataUrl, pollInterval, stallThreshold, stationName, triggerMode, triggerKeywords })
     });
-    if (player.classList.contains('visible')) {
-      audio.pause();
-      player.classList.remove('visible');
-      btn.innerHTML = '▶ PLAY';
-      btn.classList.remove('playing');
-    } else {
-      player.classList.add('visible');
-      audio.play();
-      btn.innerHTML = '⏸ PAUSE';
-      btn.classList.add('playing');
-    }
-  }
+    const data = await res.json();
+    if (data.error) return toast(data.error, 'error');
+    toast('Monitoring started', 'success');
+    document.getElementById('streamUrl').value = '';
+    document.getElementById('metadataUrl').value = '';
+    document.getElementById('stationName').value = '';
+    document.getElementById('stationSelect').value = '';
+    refreshStatus();
+    switchTab('monitor');
+  } catch(e) { toast('Could not connect', 'error'); }
+}
 
-  function onAudioEnded(safeId) {
-    const btn = document.getElementById('btn_' + safeId);
-    if (btn) { btn.innerHTML = '▶ PLAY'; btn.classList.remove('playing'); }
-  }
-
-  function downloadRec(name) {
-    const a = document.createElement('a');
-    a.href = `${API}/api/recordings/download/${encodeURIComponent(name)}`;
-    a.download = name;
-    a.click();
-  }
-
-  async function deleteRec(name) {
-    if (!confirm(`Delete ${name}?`)) return;
-    await fetch(`${API}/api/recordings/${encodeURIComponent(name)}`, { method: 'DELETE' });
-    toast('Deleted');
-    loadRecordings();
-  }
-
-  let prevStates = {};
-
-  async function refreshStatus() {
-    try {
-      const res = await fetch(`${API}/api/status`);
-      const { active } = await res.json();
-      const card = document.getElementById('monitorsCard');
-      const list = document.getElementById('monitorList');
-
-      if (!active.length) { card.style.display = 'none'; return; }
-      card.style.display = 'block';
-
-      active.forEach(m => {
-        if (prevStates[m.id] === 'recording' && m.status === 'listening') {
-          setTimeout(loadRecordings, 1500);
-        }
-        prevStates[m.id] = m.status;
-      });
-
-      list.innerHTML = active.map(m => {
-        const staleSeconds = Math.floor((Date.now() - m.lastTitleChange) / 1000);
-        const stallPct = Math.min(100, (staleSeconds / m.options.stallThreshold) * 100);
-        const stallColor = stallPct > 80 ? 'var(--red)' : stallPct > 50 ? 'var(--amber)' : 'var(--green)';
-
-        const albumArtHtml = m.currentAlbumart
-          ? `<img src="${m.currentAlbumart.startsWith('//') ? 'https:' + m.currentAlbumart : m.currentAlbumart}"
-               style="width:52px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)"
-               onerror="this.style.display='none'">`
-          : '';
-
-        const sourceLabel = m.metadataSource === 'json'
-          ? '🔗 JSON API — ' + m.options.metadataUrl
-          : '📡 ICY stream metadata';
-
-        const historyHtml = m.titleHistory.length ? `
-          <div class="title-history">
-            <div class="history-label">Recent titles</div>
-            <div class="history-list">
-              ${m.titleHistory.map(h => `
-                <div class="history-item">
-                  <span class="history-time">${fmtTime(h.time)}</span>
-                  <span class="history-title">${h.artist && h.songTitle
-                    ? '<strong>' + h.artist + '</strong> — ' + h.songTitle
-                    : (h.title || '<em>no title</em>')}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>` : '';
-
-        const artCol = albumArtHtml ? 'auto 1fr 1fr' : '1fr 1fr';
-
-        return `
-          <div class="monitor-card ${stateClass(m)}">
-            <div class="monitor-top">
-              <div class="status-dot"></div>
-              <div class="monitor-info">
-                <div class="monitor-url">${m.options.stationName ? '<strong>' + m.options.stationName + '</strong> — ' : (m.station ? m.station + ' — ' : '')}${m.url}</div>
-                <div class="monitor-status-line">${stateLabel(m)}</div>
-              </div>
-              <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
-              <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
-            </div>
-            <div class="meta-panel" style="grid-template-columns:${artCol}">
-              ${albumArtHtml ? '<div>' + albumArtHtml + '</div>' : ''}
-              <div class="meta-item">
-                <div class="meta-key">Now playing</div>
-                <div class="meta-val">${m.currentSongTitle || m.currentTitle || '—'}</div>
-                ${m.currentArtist ? '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + m.currentArtist + '</div>' : ''}
-              </div>
-              <div class="meta-item">
-                <div class="meta-key">Title unchanged for</div>
-                <div class="meta-val" style="color:${stallColor}">${staleFor(m.lastTitleChange)} ${m.status === 'recording' ? '— recording' : ''}</div>
-              </div>
-              <div class="meta-item" style="grid-column:1/-1">
-                <div class="meta-key">Metadata source</div>
-                <div class="meta-val" style="font-size:11px;white-space:normal">${sourceLabel}</div>
-              </div>
-              <div class="meta-item" style="grid-column:1/-1">
-                <div class="meta-key">Trigger mode</div>
-                <div class="meta-val" style="font-size:11px">${
-                  m.options.triggerMode === 'keyword'
-                    ? '🔑 Blank/keyword' + (m.options.triggerKeywords ? ' — <em>' + m.options.triggerKeywords + '</em>' : ' — triggers on empty title')
-                    : '⏱ Stall threshold — ' + m.options.stallThreshold + 's'
-                }</div>
-              </div>
-            </div>
-            ${historyHtml}
-          </div>
-        `;
-      }).join('');
-    } catch(e) {}
-  }
-
-  async function loadRecordings() {
-    try {
-      const res = await fetch(`${API}/api/recordings`);
-      const files = await res.json();
-      const list = document.getElementById('recList');
-      if (!files.length) {
-        list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>';
-        return;
-      }
-      list.innerHTML = files.map(f => {
-        const safeId = 'player_' + f.name.replace(/[^a-zA-Z0-9]/g, '_');
-        return `
-          <div class="rec-item">
-            <div class="rec-icon">📢</div>
-            <div class="rec-info">
-              <div class="rec-name">${f.name}</div>
-              <div class="rec-meta">${fmtSize(f.size)} &nbsp;·&nbsp; ${timeAgo(f.modified)}</div>
-            </div>
-            <div class="rec-actions">
-              <button class="btn btn-play" id="btn_${safeId}" onclick="togglePlay('${f.name}','${safeId}')">▶ PLAY</button>
-              <button class="btn btn-download" onclick="downloadRec('${f.name}')">⬇ DOWNLOAD</button>
-              <button class="btn btn-delete" onclick="deleteRec('${f.name}')">DELETE</button>
-            </div>
-            <div class="audio-player" id="${safeId}">
-              <audio controls src="${API}/api/recordings/download/${encodeURIComponent(f.name)}"
-                onended="onAudioEnded('${safeId}')"></audio>
-            </div>
-          </div>
-        `;
-      }).join('');
-    } catch(e) {}
-  }
-
-  setInterval(refreshStatus, 3000);
+async function stopMonitor(id) {
+  await fetch(`${API}/api/monitor/stop/${id}`, { method: 'POST' });
+  toast('Monitor stopped');
   refreshStatus();
-  loadRecordings();
+  setTimeout(loadRecordings, 1200);
+}
+
+async function stopAll() {
+  await fetch(`${API}/api/monitor/stopall`, { method: 'POST' });
+  toast('All monitors stopped');
+  refreshStatus();
+}
+
+function togglePlay(name, safeId) {
+  const player = document.getElementById(safeId);
+  const btn = document.getElementById('btn_' + safeId);
+  const audio = player.querySelector('audio');
+  document.querySelectorAll('.audio-player.visible').forEach(p => {
+    if (p.id !== safeId) {
+      p.querySelector('audio').pause();
+      p.classList.remove('visible');
+      const b = document.getElementById('btn_' + p.id);
+      if (b) { b.innerHTML = '▶ PLAY'; b.classList.remove('playing'); }
+    }
+  });
+  if (player.classList.contains('visible')) {
+    audio.pause(); player.classList.remove('visible');
+    btn.innerHTML = '▶ PLAY'; btn.classList.remove('playing');
+  } else {
+    player.classList.add('visible'); audio.play();
+    btn.innerHTML = '⏸ PAUSE'; btn.classList.add('playing');
+  }
+}
+
+function onAudioEnded(safeId) {
+  const btn = document.getElementById('btn_' + safeId);
+  if (btn) { btn.innerHTML = '▶ PLAY'; btn.classList.remove('playing'); }
+}
+
+function downloadRec(name) {
+  const a = document.createElement('a');
+  a.href = `${API}/api/recordings/download/${encodeURIComponent(name)}`;
+  a.download = name; a.click();
+}
+
+async function deleteRec(name) {
+  if (!confirm(`Delete ${name}?`)) return;
+  await fetch(`${API}/api/recordings/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  toast('Deleted'); loadRecordings();
+}
+
+let prevStates = {};
+
+async function refreshStatus() {
+  try {
+    const res = await fetch(`${API}/api/status`);
+    const { active } = await res.json();
+    const card = document.getElementById('monitorsCard');
+    const list = document.getElementById('monitorList');
+    if (!active.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+
+    active.forEach(m => {
+      if (prevStates[m.id] === 'recording' && m.status === 'listening') setTimeout(loadRecordings, 1500);
+      prevStates[m.id] = m.status;
+    });
+
+    list.innerHTML = active.map(m => {
+      const staleSeconds = Math.floor((Date.now() - m.lastTitleChange) / 1000);
+      const stallPct = Math.min(100, (staleSeconds / m.options.stallThreshold) * 100);
+      const stallColor = stallPct > 80 ? 'var(--red)' : stallPct > 50 ? 'var(--amber)' : 'var(--green)';
+
+      const albumArtHtml = m.currentAlbumart
+        ? `<img src="${m.currentAlbumart.startsWith('//') ? 'https:' + m.currentAlbumart : m.currentAlbumart}"
+             style="width:52px;height:52px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)"
+             onerror="this.style.display='none'">`
+        : '';
+
+      const sourceLabel = m.metadataSource === 'json'
+        ? '🔗 JSON API — ' + m.options.metadataUrl
+        : '📡 ICY stream metadata';
+
+      const triggerLabel = m.options.triggerMode === 'keyword'
+        ? '🔑 Blank/keyword' + (m.options.triggerKeywords ? ' — ' + m.options.triggerKeywords : ' — triggers on empty title')
+        : '⏱ Stall threshold — ' + m.options.stallThreshold + 's';
+
+      const stationLogoEl = stationLogoHtml(m.options.stationName, 36);
+
+      const historyHtml = m.titleHistory.length ? `
+        <div class="title-history">
+          <div class="history-label">Recent titles</div>
+          <div class="history-list">
+            ${m.titleHistory.map(h => `
+              <div class="history-item">
+                <span class="history-time">${fmtTime(h.time)}</span>
+                <span class="history-title">${h.artist && h.songTitle
+                  ? '<strong>' + h.artist + '</strong> — ' + h.songTitle
+                  : (h.title || '<em>no title</em>')}</span>
+              </div>`).join('')}
+          </div>
+        </div>` : '';
+
+      const artCols = albumArtHtml ? 'auto 1fr 1fr' : '1fr 1fr';
+
+      return `
+        <div class="monitor-card ${stateClass(m)}">
+          <div class="monitor-top">
+            <div class="status-dot"></div>
+            ${stationLogoEl}
+            <div class="monitor-info">
+              <div class="monitor-url">${m.options.stationName ? '<strong>' + m.options.stationName + '</strong> — ' : ''}${m.url}</div>
+              <div class="monitor-status-line">${stateLabel(m)}</div>
+            </div>
+            <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
+            <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
+          </div>
+          <div class="meta-panel" style="grid-template-columns:${artCols}">
+            ${albumArtHtml ? '<div>' + albumArtHtml + '</div>' : ''}
+            <div class="meta-item">
+              <div class="meta-key">Now playing</div>
+              <div class="meta-val">${m.currentSongTitle || m.currentTitle || '—'}</div>
+              ${m.currentArtist ? '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + m.currentArtist + '</div>' : ''}
+            </div>
+            <div class="meta-item">
+              <div class="meta-key">Title unchanged for</div>
+              <div class="meta-val" style="color:${stallColor}">${staleFor(m.lastTitleChange)}${m.status === 'recording' ? ' — recording' : ''}</div>
+            </div>
+            <div class="meta-item" style="grid-column:1/-1">
+              <div class="meta-key">Metadata source</div>
+              <div class="meta-val" style="font-size:11px;white-space:normal">${sourceLabel}</div>
+            </div>
+            <div class="meta-item" style="grid-column:1/-1">
+              <div class="meta-key">Trigger mode</div>
+              <div class="meta-val" style="font-size:11px">${triggerLabel}</div>
+            </div>
+          </div>
+          ${historyHtml}
+        </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadRecordings() {
+  try {
+    const res = await fetch(`${API}/api/recordings`);
+    const files = await res.json();
+    const list = document.getElementById('recList');
+    if (!files.length) {
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>No commercials captured yet</div>';
+      return;
+    }
+    list.innerHTML = files.map(f => {
+      const safeId = 'player_' + f.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const stationSlug = f.name.split('-')[0];
+      const logoUrl = logos[stationSlug];
+      const iconHtml = logoUrl
+        ? `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:contain;padding:3px">`
+        : '<span>📢</span>';
+      return `
+        <div class="rec-item">
+          <div class="rec-icon">${iconHtml}</div>
+          <div class="rec-info">
+            <div class="rec-name">${f.name}</div>
+            <div class="rec-meta">${fmtSize(f.size)} &nbsp;·&nbsp; ${timeAgo(f.modified)}</div>
+          </div>
+          <div class="rec-actions">
+            <button class="btn btn-play" id="btn_${safeId}" onclick="togglePlay('${f.name}','${safeId}')">▶ PLAY</button>
+            <button class="btn btn-download" onclick="downloadRec('${f.name}')">⬇ DOWNLOAD</button>
+            <button class="btn btn-delete" onclick="deleteRec('${f.name}')">DELETE</button>
+          </div>
+          <div class="audio-player" id="${safeId}">
+            <audio controls src="${API}/api/recordings/download/${encodeURIComponent(f.name)}" onended="onAudioEnded('${safeId}')"></audio>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadStations() {
+  try {
+    const res = await fetch(`${API}/api/logos`);
+    const data = await res.json();
+    logos = {};
+    data.forEach(s => { logos[s.station] = s.url; });
+    renderStationGrid(data);
+    updateStationSelect(data);
+  } catch(e) {}
+}
+
+function renderStationGrid(data) {
+  const grid = document.getElementById('stationGrid');
+  if (!data.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;padding:20px">No stations yet</div>';
+    return;
+  }
+  grid.innerHTML = data.map(s => `
+    <div class="station-card">
+      <button class="station-card-del" onclick="deleteLogo('${s.station}')" title="Remove">×</button>
+      <img src="${s.url}" class="station-card-logo" onerror="this.style.display='none'">
+      <div class="station-card-name">${s.station}</div>
+    </div>`).join('');
+}
+
+function updateStationSelect(data) {
+  const sel = document.getElementById('stationSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— select or type —</option>' +
+    data.map(s => `<option value="${s.station}">${s.station}</option>`).join('');
+  sel.value = current;
+}
+
+function uploadLogo() {
+  const file = document.getElementById('logoFile').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('uploadPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveStation() {
+  const name = document.getElementById('newStationName').value.trim();
+  const file = document.getElementById('logoFile').files[0];
+  if (!name) return toast('Station name is required', 'error');
+  if (!file) return toast('Please select a logo image', 'error');
+
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  try {
+    const res = await fetch(`${API}/api/logos/${encodeURIComponent(name)}`, { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) return toast(data.error, 'error');
+    toast('Station saved', 'success');
+    document.getElementById('newStationName').value = '';
+    document.getElementById('logoFile').value = '';
+    document.getElementById('uploadPreview').style.display = 'none';
+    loadStations();
+  } catch(e) { toast('Upload failed', 'error'); }
+}
+
+async function deleteLogo(station) {
+  if (!confirm(`Remove ${station}?`)) return;
+  await fetch(`${API}/api/logos/${encodeURIComponent(station)}`, { method: 'DELETE' });
+  toast('Removed');
+  loadStations();
+}
+
+// Restore theme
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('themeLabel').textContent = savedTheme.toUpperCase();
+
+setInterval(refreshStatus, 3000);
+refreshStatus();
+loadStations();
 </script>
 </body>
 </html>
