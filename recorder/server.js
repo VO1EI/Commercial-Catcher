@@ -212,6 +212,7 @@ function startMonitor(id, url, options = {}) {
     interval: null,
     options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled, metadataLogEnabled, metadataRetentionHours },
     titleHistory: [],
+    metadataLogFile: path.join(RECORDINGS_DIR, (stationName ? stationName.trim().replace(/[^a-zA-Z0-9_-]/g, '_') : 'station') + '-metadata.json'),
   };
 
   monitors[id] = state;
@@ -524,7 +525,10 @@ function appendMetadataLog(logFile, entry, retentionHours) {
     const cutoff = Date.now() - (retentionHours * 60 * 60 * 1000);
     log = log.filter(e => new Date(e.time).getTime() > cutoff);
     fs.writeFileSync(logFile, JSON.stringify(log, null, 2));
-  } catch(e) {}
+    console.log(`[metalog] wrote ${log.length} entries to ${logFile}`);
+  } catch(e) {
+    console.error(`[metalog] error writing ${logFile}:`, e.message);
+  }
 }
 
 // ── Transcribe + extract brands ──────────────────────────────────────────────
