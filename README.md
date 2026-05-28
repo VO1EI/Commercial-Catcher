@@ -10,15 +10,16 @@ docker compose up -d --build
 
 Then open **http://localhost:8090** in your browser.
 ## Features
--📻 Monitor multiple radio streams simultaneously
--🎵 Metadata Log — timestamped song play history per station
--⏺ Auto-record commercial breaks detected by blank title or keywords
--🤖 AI transcription — Whisper + Claude extract advertiser names from recordings
--🖼 Station logos with full config saved per station
--▶ Play/download/delete recordings in the browser
--🗑 Auto-purge recordings on a schedule
--🌙 Dark/light mode with persistent preference
--📋 REC / AI / LOG toggles per monitor
+
+- 📻 Monitor multiple radio streams simultaneously
+- 🎵 Metadata Log — timestamped song play history per station
+- ⏺ Auto-record commercial breaks detected by blank title or keywords
+- 🤖 AI transcription — Whisper + Claude extract advertiser names from recordings
+- 🖼 Station logos with full config saved per station
+- ▶ Play/download/delete recordings in the browser
+- 🗑 Auto-purge recordings on a schedule
+- 🌙 Dark/light mode with persistent preference
+- 📋 REC / AI / LOG toggles per monitor
 
 ## Usage
 
