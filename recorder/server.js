@@ -190,6 +190,7 @@ function startMonitor(id, url, options = {}) {
     triggerMode = 'stall',       // 'stall' or 'keyword'
     triggerKeywords = '',        // comma-separated keywords; blank = trigger on empty title
     recordingEnabled = true,     // when false, monitor metadata but don't record
+    transcribeEnabled = true,    // when false, skip whisper transcription
   } = options;
 
   const state = {
@@ -207,7 +208,7 @@ function startMonitor(id, url, options = {}) {
     ffmpegRec: null,
     startTime: new Date(),
     interval: null,
-    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled },
+    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled },
     titleHistory: [],
   };
 
@@ -315,7 +316,7 @@ function endRecording(state) {
   state.recordingFile = null;
   state.recordingStart = null;
   // Kick off transcription async after a short delay to let ffmpeg finish writing
-  if (fileToProcess) setTimeout(() => transcribeAndExtract(fileToProcess), 3000);
+  if (fileToProcess && state.options.transcribeEnabled) setTimeout(() => transcribeAndExtract(fileToProcess), 3000);
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -338,15 +339,16 @@ app.get('/api/status', (req, res) => {
     options: m.options,
     metadataSource: m.options.metadataUrl ? 'json' : 'stream',
     recordingEnabled: m.options.recordingEnabled,
+    transcribeEnabled: m.options.transcribeEnabled,
   }));
   res.json({ active });
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled } = req.body;
+  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '', recordingEnabled: recordingEnabled !== false });
+  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '', recordingEnabled: recordingEnabled !== false, transcribeEnabled: transcribeEnabled !== false });
   res.json({ id, message: 'Monitoring started' });
 });
 
@@ -448,6 +450,14 @@ app.delete('/api/stations/:name', (req, res) => {
   const stations = loadStationsData().filter(s => s.name !== req.params.name);
   saveStationsData(stations);
   res.json({ message: 'Deleted' });
+});
+
+// Toggle transcription on/off for a monitor
+app.post('/api/monitor/:id/transcribe', (req, res) => {
+  const m = monitors[req.params.id];
+  if (!m) return res.status(404).json({ error: 'Not found' });
+  m.options.transcribeEnabled = req.body.enabled !== false;
+  res.json({ transcribeEnabled: m.options.transcribeEnabled });
 });
 
 // Toggle recording on/off for a monitor

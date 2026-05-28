@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     volumes:
       - recordings:/recordings
+      - whisper_cache:/root/.cache/whisper
     networks:
       - internal
 
@@ -22,6 +23,7 @@ services:
 
 volumes:
   recordings:
+  whisper_cache:
 
 networks:
   internal:

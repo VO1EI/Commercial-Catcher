@@ -656,6 +656,16 @@ async function loadRecordings() {
 
 // ── Status polling ────────────────────────────────────────────────────────────
 
+async function toggleTranscribe(id, currentlyEnabled) {
+  const enable = !currentlyEnabled;
+  await fetch(`${API}/api/monitor/${id}/transcribe`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ enabled: enable })
+  });
+  toast(enable ? 'Transcription enabled' : 'Transcription disabled', enable ? 'success' : '');
+  refreshStatus();
+}
+
 async function toggleRecording(id, currentlyEnabled) {
   const enable = !currentlyEnabled;
   await fetch(`${API}/api/monitor/${id}/recording`, {
@@ -715,8 +725,14 @@ async function refreshStatus() {
             <div class="monitor-elapsed">up ${elapsed(m.startTime)}</div>
             <button class="btn ${m.recordingEnabled ? 'btn-rec-on' : 'btn-rec-off'}"
               onclick="toggleRecording('${m.id}', ${m.recordingEnabled})"
-              title="${m.recordingEnabled ? 'Click to pause recording (metadata only)' : 'Click to enable recording'}">
+              title="${m.recordingEnabled ? 'Pause recording' : 'Enable recording'}">
               ${m.recordingEnabled ? '⏺ REC ON' : '○ REC OFF'}
+            </button>
+            <button class="btn ${m.transcribeEnabled ? 'btn-rec-on' : 'btn-rec-off'}"
+              onclick="toggleTranscribe('${m.id}', ${m.transcribeEnabled})"
+              title="${m.transcribeEnabled ? 'Disable transcription' : 'Enable transcription'}"
+              style="font-size:10px">
+              ${m.transcribeEnabled ? '🎙 AI ON' : '🎙 AI OFF'}
             </button>
             <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
           </div>
