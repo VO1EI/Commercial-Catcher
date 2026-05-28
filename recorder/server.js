@@ -306,6 +306,7 @@ function beginRecording(state) {
 }
 
 function endRecording(state) {
+  const fileToProcess = state.recordingFile;
   if (state.ffmpegRec) {
     state.ffmpegRec.kill('SIGTERM');
     state.ffmpegRec = null;
@@ -313,6 +314,8 @@ function endRecording(state) {
   state.status = 'listening';
   state.recordingFile = null;
   state.recordingStart = null;
+  // Kick off transcription async after a short delay to let ffmpeg finish writing
+  if (fileToProcess) setTimeout(() => transcribeAndExtract(fileToProcess), 3000);
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -459,6 +462,105 @@ app.post('/api/monitor/:id/recording', (req, res) => {
     m.status = 'listening';
   }
   res.json({ recordingEnabled: m.options.recordingEnabled });
+});
+
+// ── Transcribe + extract brands ──────────────────────────────────────────────
+
+const { execSync } = require('child_process');
+
+async function transcribeAndExtract(audioFile) {
+  const audioPath = path.join(RECORDINGS_DIR, audioFile);
+  const metaPath = path.join(RECORDINGS_DIR, audioFile.replace(/\.mp3$/i, '.json'));
+
+  // Write initial status
+  const meta = { status: 'transcribing', transcript: null, brands: [], error: null };
+  fs.writeFileSync(metaPath, JSON.stringify(meta));
+
+  try {
+    // 1. Transcribe with Whisper
+    const tmpDir = `/tmp/whisper_${Date.now()}`;
+    fs.mkdirSync(tmpDir, { recursive: true });
+    execSync(`whisper "${audioPath}" --model tiny --output_format txt --output_dir "${tmpDir}" --language en`, { timeout: 120000 });
+
+    const txtFiles = fs.readdirSync(tmpDir).filter(f => f.endsWith('.txt'));
+    const transcript = txtFiles.length
+      ? fs.readFileSync(path.join(tmpDir, txtFiles[0]), 'utf8').trim()
+      : '';
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+
+    meta.transcript = transcript;
+    meta.status = 'extracting';
+    fs.writeFileSync(metaPath, JSON.stringify(meta));
+
+    if (!transcript) {
+      meta.status = 'done';
+      meta.brands = [];
+      fs.writeFileSync(metaPath, JSON.stringify(meta));
+      return;
+    }
+
+    // 2. Extract brand names with Claude
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        messages: [{
+          role: 'user',
+          content: `Extract all company names, brand names, and advertiser names from this radio commercial transcript. Return ONLY a JSON array of strings, no explanation. If none found return [].
+
+Transcript:
+${transcript}`
+        }]
+      })
+    });
+
+    const aiData = await response.json();
+    const raw = aiData.content?.[0]?.text || '[]';
+    let brands = [];
+    try {
+      const clean = raw.replace(/\`\`\`json|\`\`\`/g, '').trim();
+      brands = JSON.parse(clean);
+      if (!Array.isArray(brands)) brands = [];
+    } catch(_) {
+      // Try to extract anything that looks like a list
+      const matches = raw.match(/"([^"]+)"/g);
+      brands = matches ? matches.map(m => m.replace(/"/g, '')) : [];
+    }
+
+    meta.status = 'done';
+    meta.brands = brands;
+    fs.writeFileSync(metaPath, JSON.stringify(meta));
+
+  } catch(e) {
+    meta.status = 'error';
+    meta.error = e.message;
+    fs.writeFileSync(metaPath, JSON.stringify(meta));
+  }
+}
+
+// ── Recording metadata (transcripts + brands) ────────────────────────────────
+
+app.get('/api/recordings/meta/:name', (req, res) => {
+  const metaPath = path.join(RECORDINGS_DIR, req.params.name.replace(/\.(mp3|aac|ogg)$/i, '.json'));
+  if (!fs.existsSync(metaPath)) return res.json({ status: 'pending', brands: [], transcript: null });
+  try { res.json(JSON.parse(fs.readFileSync(metaPath, 'utf8'))); }
+  catch(_) { res.json({ status: 'error', brands: [], transcript: null }); }
+});
+
+app.patch('/api/recordings/meta/:name', (req, res) => {
+  const metaPath = path.join(RECORDINGS_DIR, req.params.name.replace(/\.(mp3|aac|ogg)$/i, '.json'));
+  let existing = {};
+  try { existing = JSON.parse(fs.readFileSync(metaPath, 'utf8')); } catch(_) {}
+  const updated = { ...existing, ...req.body };
+  fs.writeFileSync(metaPath, JSON.stringify(updated, null, 2));
+  res.json(updated);
 });
 
 // ── Purge recordings ──────────────────────────────────────────────────────────

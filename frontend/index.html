@@ -137,6 +137,15 @@
   .rec-meta{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px}
   .rec-actions{display:flex;gap:6px;flex-shrink:0}
   .audio-player{width:100%;display:none;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
+  .brands-panel{width:100%;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
+  .brands-label{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .brands-status{font-size:10px;color:var(--amber);font-family:'Space Mono',monospace}
+  .brands-box{width:100%;min-height:48px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:vertical;outline:none;transition:border-color .2s}
+  .brands-box:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(26,107,60,.1)}
+  .brands-hint{font-size:11px;color:var(--muted);margin-top:5px}
+  .transcript-toggle{font-size:10px;color:var(--blue);cursor:pointer;font-family:'Space Mono',monospace;margin-left:auto}
+  .transcript-toggle:hover{text-decoration:underline}
+  .transcript-box{display:none;width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);resize:vertical;margin-top:6px;font-family:'DM Sans',sans-serif;outline:none}
   .audio-player.visible{display:block}
   .audio-player audio{width:100%;height:36px;outline:none}
 
@@ -628,6 +637,18 @@ async function loadRecordings() {
           <div class="audio-player" id="${safeId}">
             <audio controls src="${API}/api/recordings/download/${encodeURIComponent(f.name)}" onended="onAudioEnded('${safeId}')"></audio>
           </div>
+          <div class="brands-panel" id="brands_${safeId}">
+            <div class="brands-label">
+              🏢 Advertiser Names
+              <span class="brands-status" id="brandsstatus_${safeId}">Loading...</span>
+              <span class="transcript-toggle" onclick="toggleTranscript('${safeId}')">show transcript</span>
+            </div>
+            <textarea class="brands-box" id="brandsbox_${safeId}"
+              placeholder="Detected advertiser names will appear here..."
+              onchange="saveBrands('${f.name}', '${safeId}')"></textarea>
+            <div class="brands-hint">Edit freely — auto-detected from transcript via AI. One per line.</div>
+            <textarea class="transcript-box" id="transcript_${safeId}" readonly placeholder="Transcript will appear here..."></textarea>
+          </div>
         </div>`;
     }).join('');
   } catch(e) {}
@@ -852,6 +873,67 @@ async function deleteStation(name) {
   await fetch(`${API}/api/stations/${encodeURIComponent(name)}`, {method:'DELETE'});
   toast('Deleted');
   loadStations();
+}
+
+// ── Brands / transcript ──────────────────────────────────────────────────────
+
+async function loadBrandsMeta(filename, safeId) {
+  const statusEl = document.getElementById('brandsstatus_' + safeId);
+  const boxEl = document.getElementById('brandsbox_' + safeId);
+  const transcriptEl = document.getElementById('transcript_' + safeId);
+  if (!statusEl || !boxEl) return;
+
+  try {
+    const res = await fetch(`${API}/api/recordings/meta/${encodeURIComponent(filename)}`);
+    const data = await res.json();
+
+    if (data.status === 'transcribing') {
+      statusEl.textContent = '⏳ Transcribing...';
+      statusEl.style.color = 'var(--amber)';
+      setTimeout(() => loadBrandsMeta(filename, safeId), 4000);
+    } else if (data.status === 'extracting') {
+      statusEl.textContent = '🤖 Extracting brands...';
+      statusEl.style.color = 'var(--amber)';
+      setTimeout(() => loadBrandsMeta(filename, safeId), 3000);
+    } else if (data.status === 'done') {
+      statusEl.textContent = data.brands.length ? '✓ ' + data.brands.length + ' found' : '✓ none detected';
+      statusEl.style.color = 'var(--green)';
+      boxEl.value = data.brands.join('\n');
+      if (transcriptEl && data.transcript) transcriptEl.value = data.transcript;
+    } else if (data.status === 'error') {
+      statusEl.textContent = '⚠ Error: ' + (data.error || 'unknown');
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = '⏳ Pending...';
+      statusEl.style.color = 'var(--muted)';
+    }
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = '—'; statusEl.style.color = 'var(--muted)'; }
+  }
+}
+
+async function saveBrands(filename, safeId) {
+  const boxEl = document.getElementById('brandsbox_' + safeId);
+  if (!boxEl) return;
+  const brands = boxEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+  await fetch(`${API}/api/recordings/meta/${encodeURIComponent(filename)}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ brands })
+  });
+}
+
+function toggleTranscript(safeId) {
+  const box = document.getElementById('transcript_' + safeId);
+  const toggle = box.previousElementSibling;
+  if (!box) return;
+  const visible = box.style.display === 'block';
+  box.style.display = visible ? 'none' : 'block';
+  if (toggle && toggle.classList.contains('brands-hint')) {
+    // find the toggle span
+  }
+  // find toggle span by id
+  const toggleEl = document.querySelector(`#brands_${safeId} .transcript-toggle`);
+  if (toggleEl) toggleEl.textContent = visible ? 'show transcript' : 'hide transcript';
 }
 
 // ── Purge ─────────────────────────────────────────────────────────────────────
