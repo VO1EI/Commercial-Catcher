@@ -180,6 +180,18 @@
   details[open] summary{margin-bottom:14px}
 
   .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+  .log-item{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;border-bottom:1px solid var(--border)}
+  .log-item:last-child{border-bottom:none}
+  .log-item:hover{background:var(--surface2)}
+  .log-time{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;width:80px}
+  .log-art{width:32px;height:32px;border-radius:4px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+  .log-art-placeholder{width:32px;height:32px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .log-info{flex:1;min-width:0}
+  .log-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .log-artist{font-size:11px;color:var(--muted);margin-top:1px}
+  .log-ad{background:var(--red-bg);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--red);font-family:'Space Mono',monospace;flex-shrink:0}
+  .retention-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:12px;color:var(--muted)}
+  .retention-bar input{width:70px;padding:5px 8px;font-size:12px}
 
   @media(max-width:620px){
     .header,.main{padding-left:16px;padding-right:16px}
@@ -207,6 +219,7 @@
     <button class="tab active" onclick="switchTab('monitor')">MONITOR</button>
     <button class="tab" onclick="switchTab('recordings')">RECORDINGS</button>
     <button class="tab" onclick="switchTab('stations')">STATIONS</button>
+    <button class="tab" onclick="switchTab('log')">METADATA LOG</button>
   </div>
 
   <!-- MONITOR TAB -->
@@ -388,6 +401,25 @@
       </div>
     </div>
   </div>
+  <!-- METADATA LOG TAB -->
+  <div class="tab-panel" id="tab-log">
+    <div class="card">
+      <div class="section-header">
+        <div class="card-label" style="margin:0">Song Play Log</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="logStationSelect" onchange="loadLog()" style="width:160px;padding:6px 10px;font-size:12px">
+            <option value="">— select station —</option>
+          </select>
+          <button class="btn btn-sm" onclick="loadLog()">↻ REFRESH</button>
+          <button class="btn btn-delete" style="padding:5px 12px;font-size:10px" onclick="clearLog()">CLEAR</button>
+        </div>
+      </div>
+      <div id="logList">
+        <div class="empty"><div class="empty-icon">🎵</div>No metadata logged yet — start a monitor with logging enabled</div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -405,10 +437,11 @@ function toast(msg, type='') {
 }
 
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['monitor','recordings','stations'][i] === name));
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['monitor','recordings','stations','log'][i] === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
   if (name === 'recordings') loadRecordings();
   if (name === 'stations') loadStations();
+  if (name === 'log') loadLog();
 }
 
 function toggleTheme() {
@@ -734,6 +767,12 @@ async function refreshStatus() {
               style="font-size:10px">
               ${m.transcribeEnabled ? '🎙 AI ON' : '🎙 AI OFF'}
             </button>
+            <button class="btn ${m.metadataLogEnabled ? 'btn-rec-on' : 'btn-rec-off'}"
+              onclick="toggleMetaLog('${m.id}', ${m.metadataLogEnabled})"
+              title="${m.metadataLogEnabled ? 'Disable metadata logging' : 'Enable metadata logging'}"
+              style="font-size:10px">
+              ${m.metadataLogEnabled ? '📋 LOG ON' : '📋 LOG OFF'}
+            </button>
             <button class="btn btn-stop" onclick="stopMonitor('${m.id}')">STOP</button>
           </div>
           <div class="meta-panel" style="grid-template-columns:${artCols}">
@@ -950,6 +989,120 @@ function toggleTranscript(safeId) {
   // find toggle span by id
   const toggleEl = document.querySelector(`#brands_${safeId} .transcript-toggle`);
   if (toggleEl) toggleEl.textContent = visible ? 'show transcript' : 'hide transcript';
+}
+
+// ── Metadata log ──────────────────────────────────────────────────────────────
+
+async function toggleMetaLog(id, currentlyEnabled) {
+  const enable = !currentlyEnabled;
+  await fetch(`${API}/api/monitor/${id}/metalog`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ enabled: enable })
+  });
+  toast(enable ? 'Metadata logging enabled' : 'Metadata logging disabled', enable ? 'success' : '');
+  refreshStatus();
+}
+
+async function loadLog() {
+  const sel = document.getElementById('logStationSelect');
+  const station = sel ? sel.value : '';
+  const list = document.getElementById('logList');
+  if (!list) return;
+
+  // Populate station select from saved stations + active monitors
+  const allStations = new Set();
+  savedStations.forEach(s => allStations.add(s.name));
+  Object.values({}).forEach(m => { if (m.options && m.options.stationName) allStations.add(m.options.stationName); });
+
+  if (sel) {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— select station —</option>' +
+      [...allStations].map(s => `<option value="${s}" ${s === current ? 'selected' : ''}>${s}</option>`).join('');
+    // Also populate from active monitors via API
+    try {
+      const sRes = await fetch(`${API}/api/status`);
+      const { active } = await sRes.json();
+      active.forEach(m => { if (m.options.stationName) allStations.add(m.options.stationName); });
+      sel.innerHTML = '<option value="">— select station —</option>' +
+        [...allStations].map(s => `<option value="${s}" ${s === current ? 'selected' : ''}>${s}</option>`).join('');
+    } catch(_) {}
+  }
+
+  if (!station) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🎵</div>Select a station to view its log</div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/api/metalog/${encodeURIComponent(station)}`);
+    const entries = await res.json();
+
+    if (!entries.length) {
+      list.innerHTML = '<div class="empty"><div class="empty-icon">🎵</div>No entries logged for ' + station + ' yet</div>';
+      return;
+    }
+
+    // Find active monitor for this station to show retention info
+    let retentionHtml = '';
+    try {
+      const sRes = await fetch(`${API}/api/status`);
+      const { active } = await sRes.json();
+      const monitor = active.find(m => m.options.stationName === station);
+      if (monitor) {
+        retentionHtml = `
+          <div class="retention-bar">
+            <span>📋 Logging active</span>
+            <span style="margin-left:auto">Keep last</span>
+            <input type="number" id="retentionInput_${monitor.id}" value="${monitor.metadataRetentionHours}" min="1" step="0.5" />
+            <span>hours</span>
+            <button class="btn btn-sm" onclick="updateRetention('${monitor.id}')">SAVE</button>
+          </div>`;
+      }
+    } catch(_) {}
+
+    list.innerHTML = retentionHtml + entries.map(e => {
+      const isAd = !e.title || e.title.trim() === '';
+      const artHtml = e.albumart
+        ? `<img src="${e.albumart.startsWith('//') ? 'https:' + e.albumart : e.albumart}" class="log-art" onerror="this.style.display='none'">`
+        : `<div class="log-art-placeholder">${isAd ? '📢' : '🎵'}</div>`;
+      const timeStr = new Date(e.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      const dateStr = new Date(e.time).toLocaleDateString([], {month:'short',day:'numeric'});
+      return `
+        <div class="log-item">
+          <div class="log-time">${dateStr}<br>${timeStr}</div>
+          ${artHtml}
+          <div class="log-info">
+            <div class="log-title">${e.songTitle || e.title || '<em style="color:var(--muted)">Ad break</em>'}</div>
+            ${e.artist ? '<div class="log-artist">' + e.artist + '</div>' : ''}
+          </div>
+          ${isAd ? '<span class="log-ad">AD</span>' : ''}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Failed to load log</div>';
+  }
+}
+
+async function updateRetention(monitorId) {
+  const input = document.getElementById('retentionInput_' + monitorId);
+  if (!input) return;
+  const hours = parseFloat(input.value) || 5;
+  await fetch(`${API}/api/monitor/${monitorId}/metalog`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ enabled: true, retentionHours: hours })
+  });
+  toast('Retention updated to ' + hours + 'h', 'success');
+  loadLog();
+}
+
+async function clearLog() {
+  const sel = document.getElementById('logStationSelect');
+  const station = sel ? sel.value : '';
+  if (!station) return toast('Select a station first', 'error');
+  if (!confirm('Clear all logged metadata for ' + station + '?')) return;
+  await fetch(`${API}/api/metalog/${encodeURIComponent(station)}`, { method: 'DELETE' });
+  toast('Log cleared');
+  loadLog();
 }
 
 // ── Purge ─────────────────────────────────────────────────────────────────────

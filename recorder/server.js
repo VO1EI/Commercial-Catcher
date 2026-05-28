@@ -191,6 +191,8 @@ function startMonitor(id, url, options = {}) {
     triggerKeywords = '',        // comma-separated keywords; blank = trigger on empty title
     recordingEnabled = true,     // when false, monitor metadata but don't record
     transcribeEnabled = true,    // when false, skip whisper transcription
+    metadataLogEnabled = true,   // when false, don't log song metadata
+    metadataRetentionHours = 5,  // how many hours of metadata to keep
   } = options;
 
   const state = {
@@ -208,7 +210,7 @@ function startMonitor(id, url, options = {}) {
     ffmpegRec: null,
     startTime: new Date(),
     interval: null,
-    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled },
+    options: { pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled, metadataLogEnabled, metadataRetentionHours },
     titleHistory: [],
   };
 
@@ -235,14 +237,20 @@ function startMonitor(id, url, options = {}) {
       if (title !== state.lastTitle) {
         state.lastTitle = title;
         state.lastTitleChange = now;
-        state.titleHistory.unshift({
+        const historyEntry = {
           title,
           artist: meta.artist || null,
           songTitle: meta.songTitle || null,
           albumart: meta.albumart || null,
           time: new Date(),
-        });
+        };
+        state.titleHistory.unshift(historyEntry);
         if (state.titleHistory.length > 20) state.titleHistory.pop();
+
+        // Write to persistent metadata log
+        if (state.options.metadataLogEnabled && title) {
+          appendMetadataLog(state.metadataLogFile, historyEntry, state.options.metadataRetentionHours);
+        }
       }
 
       // Determine if currently in an ad break based on trigger mode
@@ -340,15 +348,18 @@ app.get('/api/status', (req, res) => {
     metadataSource: m.options.metadataUrl ? 'json' : 'stream',
     recordingEnabled: m.options.recordingEnabled,
     transcribeEnabled: m.options.transcribeEnabled,
+    metadataLogEnabled: m.options.metadataLogEnabled,
+    metadataRetentionHours: m.options.metadataRetentionHours,
+    metadataLogFile: m.metadataLogFile,
   }));
   res.json({ active });
 });
 
 app.post('/api/monitor/start', (req, res) => {
-  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled } = req.body;
+  const { url, pollInterval, stallThreshold, metadataUrl, stationName, triggerMode, triggerKeywords, recordingEnabled, transcribeEnabled, metadataLogEnabled, metadataRetentionHours } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
   const id = Date.now().toString();
-  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '', recordingEnabled: recordingEnabled !== false, transcribeEnabled: transcribeEnabled !== false });
+  startMonitor(id, url, { pollInterval, stallThreshold, metadataUrl: metadataUrl || null, stationName: stationName || '', triggerMode: triggerMode || 'stall', triggerKeywords: triggerKeywords || '', recordingEnabled: recordingEnabled !== false, transcribeEnabled: transcribeEnabled !== false, metadataLogEnabled: metadataLogEnabled !== false, metadataRetentionHours: parseFloat(metadataRetentionHours) || 5 });
   res.json({ id, message: 'Monitoring started' });
 });
 
@@ -452,6 +463,32 @@ app.delete('/api/stations/:name', (req, res) => {
   res.json({ message: 'Deleted' });
 });
 
+// Toggle metadata logging on/off for a monitor
+app.post('/api/monitor/:id/metalog', (req, res) => {
+  const m = monitors[req.params.id];
+  if (!m) return res.status(404).json({ error: 'Not found' });
+  m.options.metadataLogEnabled = req.body.enabled !== false;
+  if (req.body.retentionHours) m.options.metadataRetentionHours = parseFloat(req.body.retentionHours);
+  res.json({ metadataLogEnabled: m.options.metadataLogEnabled, metadataRetentionHours: m.options.metadataRetentionHours });
+});
+
+// Get metadata log for a station
+app.get('/api/metalog/:station', (req, res) => {
+  const slug = req.params.station.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const logFile = path.join(RECORDINGS_DIR, slug + '-metadata.json');
+  if (!fs.existsSync(logFile)) return res.json([]);
+  try { res.json(JSON.parse(fs.readFileSync(logFile, 'utf8'))); }
+  catch(_) { res.json([]); }
+});
+
+// Clear metadata log for a station
+app.delete('/api/metalog/:station', (req, res) => {
+  const slug = req.params.station.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const logFile = path.join(RECORDINGS_DIR, slug + '-metadata.json');
+  if (fs.existsSync(logFile)) fs.unlinkSync(logFile);
+  res.json({ message: 'Cleared' });
+});
+
 // Toggle transcription on/off for a monitor
 app.post('/api/monitor/:id/transcribe', (req, res) => {
   const m = monitors[req.params.id];
@@ -473,6 +510,22 @@ app.post('/api/monitor/:id/recording', (req, res) => {
   }
   res.json({ recordingEnabled: m.options.recordingEnabled });
 });
+
+// ── Metadata log ─────────────────────────────────────────────────────────────
+
+function appendMetadataLog(logFile, entry, retentionHours) {
+  try {
+    let log = [];
+    if (fs.existsSync(logFile)) {
+      try { log = JSON.parse(fs.readFileSync(logFile, 'utf8')); } catch(_) {}
+    }
+    log.unshift({ ...entry, time: new Date(entry.time).toISOString() });
+    // Trim to retention window
+    const cutoff = Date.now() - (retentionHours * 60 * 60 * 1000);
+    log = log.filter(e => new Date(e.time).getTime() > cutoff);
+    fs.writeFileSync(logFile, JSON.stringify(log, null, 2));
+  } catch(e) {}
+}
 
 // ── Transcribe + extract brands ──────────────────────────────────────────────
 
